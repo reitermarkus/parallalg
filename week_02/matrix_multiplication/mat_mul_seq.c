@@ -26,6 +26,7 @@ bool check() {
       break;
     }
   }
+
   return success;
 }
 
@@ -34,6 +35,7 @@ int main(int argc, char **argv) {
   if (argc > 1) {
     N = atoi(argv[1]);
   }
+
   printf("Matrix Multiplication with N=%d\n", N);
 
   // -------------------- SETUP -------------------- //

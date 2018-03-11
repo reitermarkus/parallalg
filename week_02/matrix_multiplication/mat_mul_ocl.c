@@ -6,9 +6,9 @@
 static int N = 1000;
 static int dimension = 2;
 
-static Matrix mtx_A;
-static Matrix mtx_B;
-static Matrix mtx_RES;
+static Matrix mtx_a;
+static Matrix mtx_b;
+static Matrix mtx_res;
 
 static size_t vec_size;
 
@@ -17,11 +17,11 @@ static cl_mem dev_vec_B;
 static cl_mem dev_vec_RES;
 
 void init_matrices() {
-  mtx_A = create_matrix(N, N);
-  mtx_B = create_matrix(N, N);
-  mtx_RES = create_matrix(N, N);
+  mtx_a = create_matrix(N, N);
+  mtx_b = create_matrix(N, N);
+  mtx_res = create_matrix(N, N);
 
-  fill_matrices(mtx_A, mtx_B, N);
+  fill_matrices(mtx_a, mtx_b, N);
 }
 
 void init_platform() {
@@ -58,9 +58,9 @@ void init_devices() {
       context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, vec_size, NULL, &ret);
 
   ret = clEnqueueWriteBuffer(command_queue, dev_vec_A, CL_TRUE, 0, vec_size,
-                             &mtx_A[0], 0, NULL, NULL);
+                             &mtx_a[0], 0, NULL, NULL);
   ret = clEnqueueWriteBuffer(command_queue, dev_vec_B, CL_TRUE, 0, vec_size,
-                             &mtx_B[0], 0, NULL, NULL);
+                             &mtx_b[0], 0, NULL, NULL);
 }
 
 void run_kernel(const char *kernel_name) {
@@ -91,7 +91,7 @@ void run_kernel(const char *kernel_name) {
   // returns if CL_TRUE: segmentation fault with compiler optimization flags -O2
   // or -O3
   ret = clEnqueueReadBuffer(command_queue, dev_vec_RES, CL_TRUE, 0, vec_size,
-                            &mtx_RES[0], 0, NULL, NULL);
+                            &mtx_res[0], 0, NULL, NULL);
 }
 
 void clean_up() {
@@ -117,7 +117,7 @@ bool check() {
   bool success = true;
   for (long long i = 0; i < N; i++) {
     for (long long j = 0; j < N; j++) {
-      if (mtx_RES[i * N + j] == i * j)
+      if (mtx_res[i * N + j] == i * j)
         continue;
       success = false;
       break;
@@ -134,6 +134,7 @@ int main(int argc, char **argv) {
   if (argc > 1) {
     N = atoi(argv[1]);
   }
+
   printf("Matrix Multiplication with N=%d\n", N);
 
   // -------------------- SETUP -------------------- //
@@ -151,6 +152,7 @@ int main(int argc, char **argv) {
   kernel_code code = load_code(program_name);
   program = clCreateProgramWithSource(context, 1, &code.code,
                                       (const size_t *)&code.size, &ret);
+
   ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
 
   if (ret != CL_SUCCESS) {
@@ -177,9 +179,9 @@ int main(int argc, char **argv) {
   printf("Verification: %s\n", (success) ? "OK" : "FAILED");
 
   // ----------------- CLEAN UP ------------------ //
-  release_matrix(mtx_A);
-  release_matrix(mtx_B);
-  release_matrix(mtx_RES);
+  release_matrix(mtx_a);
+  release_matrix(mtx_b);
+  release_matrix(mtx_res);
 
   return (success) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
