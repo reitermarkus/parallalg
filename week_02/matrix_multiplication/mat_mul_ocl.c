@@ -128,8 +128,8 @@ bool check() {
 
 int main(int argc, char **argv) {
 
-  const char *program_name = "vec_mul.cl";
-  const char *kernel_name = "vec_mul";
+  const char *program_name = "mat_mul.cl";
+  const char *kernel_name = "mat_mul";
 
   if (argc > 1) {
     N = atoi(argv[1]);

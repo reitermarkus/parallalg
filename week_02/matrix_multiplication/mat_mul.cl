@@ -1,6 +1,6 @@
-__kernel void vec_mul(
-    __global float* res_mat, 
-    __global float* mat_A, 
+__kernel void mat_mul(
+    __global float* res_mat,
+    __global float* mat_A,
     __global float* mat_B,
     const int N
 ) {
