@@ -9,7 +9,7 @@ typedef double timestamp;
 
 timestamp now() {
   struct timespec spec;
-  timespec_get(&spec, TIME_UTC);
+  clock_gettime(CLOCK_REALTIME, &spec);
   return spec.tv_sec + spec.tv_nsec / (1e9);
 }
 
