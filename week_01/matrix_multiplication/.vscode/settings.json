@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "utils.h": "c",
+        "matrix.h": "c",
+        "headers.h": "c",
+        "array": "c",
+        "initializer_list": "c",
+        "string_view": "c",
+        "utility": "c",
+        "stdio.h": "c",
+        "open_cl.h": "c",
+        "stdlib.h": "c"
+    }
+}
