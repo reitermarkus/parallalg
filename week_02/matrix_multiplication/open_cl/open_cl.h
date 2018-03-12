@@ -2,8 +2,7 @@
 #define __OPEN_CL_H__
 
 
-#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
-#include <CL/cl.h>
+#include "opencl.h"
 
 // -- kernel code utils --
 

@@ -1,9 +1,23 @@
+OPT = -O3
+CC_FLAGS = -std=c11 -Werror -pedantic -I../../shared
+OPENCL_FLAGS = -lOpenCL
 
-OCL_HOME=/scratch/c703/c7031057/opencl
-
-CC=gcc
-OPT=-O3
-CC_FLAGS= -std=c11 -Werror -pedantic -I$(OCL_HOME)/include -L$(OCL_HOME)/lib
+ifneq ($(OS), Windows_NT)
+  ifeq ($(shell uname -s), Darwin)
+    ifeq ($(shell brew ls llvm &>/dev/null; echo $$?), 0)
+      LLVM_PREFIX = $(shell brew --prefix gcc)
+      CC = $(LLVM_PREFIX)/bin/gcc-7
+      INCLUDES += -I$(LLVM_PREFIX)/include
+      LDFLAGS += -L$(LLVM_PREFIX)/lib
+      OPENCL_FLAGS = -framework OpenCL
+    else
+      $(error "GCC is not installed, run `brew install gcc`")
+    endif
+	else
+    OCL_HOME = /scratch/c703/c7031057/opencl
+    CC_FLAGS += -I$(OCL_HOME)/include -L$(OCL_HOME)/lib
+  endif
+endif
 
 HEADERS=$(wildcard */*.h)
 COMMON_DEPENDENCIES=Makefile $(HEADERS)
@@ -19,12 +33,12 @@ mat_mul_omp: $(COMMON_DEPENDENCIES)
 	@$(CC) $(OPT) $(CC_FLAGS) $(CFILES) -w mat_mul_omp.c -o mat_mul_omp -fopenmp
 
 mat_mul_ocl: $(COMMON_DEPENDENCIES)
-	@$(CC) $(CC_FLAGS) $(CFILES) mat_mul_ocl.c -o mat_mul_ocl -lOpenCL
+	@$(CC) $(CC_FLAGS) $(CFILES) mat_mul_ocl.c -o mat_mul_ocl $(OPENCL_FLAGS)
 
 .PHONY: clean
 clean:
 	@rm mat_mul_seq mat_mul_omp mat_mul_ocl
-	
+
 run: all
 	@echo "Sequential:"
 	@./mat_mul_seq
