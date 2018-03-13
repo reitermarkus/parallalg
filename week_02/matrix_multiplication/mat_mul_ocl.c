@@ -3,7 +3,7 @@
 #include "matrix/matrix.h"
 #include "open_cl/open_cl.h"
 
-static int N = 4;
+static int N = 1000;
 static int dimension = 2;
 
 static Matrix mtx_a;
@@ -71,12 +71,12 @@ void run_kernel(const char *kernel_name) {
   ret = clSetKernelArg(kernel, 3, sizeof(int), &N);
 
   // 11) schedule kernel
-  size_t global_work_offset = 0;
+  size_t global_work_offset[2] = {0, 0};
   size_t global_work_size[2] = {N, N};
 
   // execute kernel on device
   ret = clEnqueueNDRangeKernel(command_queue, kernel, dimension,
-                               &global_work_offset, global_work_size, NULL, 0,
+                               global_work_offset, global_work_size, NULL, 0,
                                NULL, NULL);
 
   // dummy event, for waiting until kernel finish.
@@ -177,12 +177,6 @@ int main(int argc, char **argv) {
   // ------------------- CHECK ------------------- //
   bool success = check();
   printf("Verification: %s\n", (success) ? "OK" : "FAILED");
-
-  print_matrix(mtx_a, N, N);
-  printf("\n");
-  print_matrix(mtx_b, N, N);
-  printf("\n");
-  print_matrix(mtx_res, N, N);
 
   // ----------------- CLEAN UP ------------------ //
   release_matrix(mtx_a);
