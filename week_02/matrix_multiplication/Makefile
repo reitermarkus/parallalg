@@ -37,7 +37,7 @@ mat_mul_ocl: $(COMMON_DEPENDENCIES)
 
 .PHONY: clean
 clean:
-	@rm mat_mul_seq mat_mul_omp mat_mul_ocl
+	$(RM) mat_mul_seq mat_mul_omp mat_mul_ocl
 
 run: all
 	@echo "Sequential:"

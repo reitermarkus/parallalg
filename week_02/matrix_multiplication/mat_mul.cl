@@ -1,22 +1,22 @@
 kernel void mat_mul(
     global float* res_mat,
-    global float* mat_A,
-    global float* mat_B,
-    const int N
+    global float* mat_a,
+    global float* mat_b,
+    const size_t n
 ) {
     // global position in X direction
-    int col = get_global_id(0);
+    size_t col = get_global_id(0);
 
     // global position in Y direction
-    int row = get_global_id(1);
+    size_t row = get_global_id(1);
 
     float res = 0.0f;
 
     // compute result for one cell
-    for(int i = 0; i < N; i++) {
-        res += mat_A[row * N + i] * mat_B[i * N + col];
+    for(size_t i = 0; i < n; i++) {
+        res += mat_a[row * n + i] * mat_b[i * n + col];
     }
 
     // printf("f4 = %2.2v4hlf\n", res);
-    res_mat[row * N + col] = res;
+    res_mat[row * n + col] = res;
 }

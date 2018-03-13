@@ -1,7 +1,10 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 
-#include "headers.h"
+#define _POSIX_C_SOURCE 199309L
+
+#include <time.h>
+#include <unistd.h>
 
 // a small wrapper for convenient time measurements
 

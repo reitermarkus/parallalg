@@ -1,28 +1,16 @@
 #include "common/headers.h"
 #include "common/utils.h"
 #include "matrix/matrix.h"
+#include "matrix/helpers.h"
 #include "open_cl/open_cl.h"
 
-static int N = 1000;
 static int dimension = 2;
-
-static Matrix mtx_a;
-static Matrix mtx_b;
-static Matrix mtx_res;
 
 static size_t vec_size;
 
-static cl_mem dev_vec_A;
-static cl_mem dev_vec_B;
-static cl_mem dev_vec_RES;
-
-void init_matrices() {
-  mtx_a = create_matrix(N, N);
-  mtx_b = create_matrix(N, N);
-  mtx_res = create_matrix(N, N);
-
-  fill_matrices(mtx_a, mtx_b, N);
-}
+static cl_mem dev_vec_a;
+static cl_mem dev_vec_b;
+static cl_mem dev_vec_res;
 
 void init_platform() {
   // initialize OpenCL local state variables
@@ -37,42 +25,35 @@ void init_platform() {
 
   ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
 
-  ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id,
-                       &ret_num_devices);
+  ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
 
   context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
 
-  command_queue =
-      clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
+  command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
 }
 
 void init_devices() {
   // ------------ Part B (data management) ------------ //
 
-  vec_size = sizeof(value_t) * N * N;
-  dev_vec_A = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY,
-                             vec_size, NULL, &ret);
-  dev_vec_B = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY,
-                             vec_size, NULL, &ret);
-  dev_vec_RES = clCreateBuffer(
-      context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, vec_size, NULL, &ret);
+  vec_size = sizeof(value_t) * n * n;
+  dev_vec_a   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
+  dev_vec_b   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
+  dev_vec_res = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, vec_size, NULL, &ret);
 
-  ret = clEnqueueWriteBuffer(command_queue, dev_vec_A, CL_TRUE, 0, vec_size,
-                             &mtx_a[0], 0, NULL, NULL);
-  ret = clEnqueueWriteBuffer(command_queue, dev_vec_B, CL_TRUE, 0, vec_size,
-                             &mtx_b[0], 0, NULL, NULL);
+  ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, &mtx_a[0], 0, NULL, NULL);
+  ret = clEnqueueWriteBuffer(command_queue, dev_vec_b, CL_TRUE, 0, vec_size, &mtx_b[0], 0, NULL, NULL);
 }
 
 void run_kernel(const char *kernel_name) {
   kernel = clCreateKernel(program, kernel_name, &ret);
-  ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &dev_vec_RES);
-  ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &dev_vec_A);
-  ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), &dev_vec_B);
-  ret = clSetKernelArg(kernel, 3, sizeof(int), &N);
+  ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &dev_vec_res);
+  ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &dev_vec_a);
+  ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), &dev_vec_b);
+  ret = clSetKernelArg(kernel, 3, sizeof(n), &n);
 
   // 11) schedule kernel
   size_t global_work_offset[2] = {0, 0};
-  size_t global_work_size[2] = {N, N};
+  size_t global_work_size[2] = {n, n};
 
   // execute kernel on device
   ret = clEnqueueNDRangeKernel(command_queue, kernel, dimension,
@@ -90,8 +71,7 @@ void run_kernel(const char *kernel_name) {
   // CL_FALSE: clEnqueueReadBuffer queues a non-blocking read command and
   // returns if CL_TRUE: segmentation fault with compiler optimization flags -O2
   // or -O3
-  ret = clEnqueueReadBuffer(command_queue, dev_vec_RES, CL_TRUE, 0, vec_size,
-                            &mtx_res[0], 0, NULL, NULL);
+  ret = clEnqueueReadBuffer(command_queue, dev_vec_res, CL_TRUE, 0, vec_size, &mtx_res[0], 0, NULL, NULL);
 }
 
 void clean_up() {
@@ -104,38 +84,24 @@ void clean_up() {
   ret = clReleaseProgram(program);
 
   // free device memory
-  ret = clReleaseMemObject(dev_vec_A);
-  ret = clReleaseMemObject(dev_vec_B);
-  ret = clReleaseMemObject(dev_vec_RES);
+  ret = clReleaseMemObject(dev_vec_a);
+  ret = clReleaseMemObject(dev_vec_b);
+  ret = clReleaseMemObject(dev_vec_res);
 
   // free management resources
   ret = clReleaseCommandQueue(command_queue);
   ret = clReleaseContext(context);
 }
 
-bool check() {
-  bool success = true;
-  for (long long i = 0; i < N; i++) {
-    for (long long j = 0; j < N; j++) {
-      if (mtx_res[i * N + j] == i * j)
-        continue;
-      success = false;
-      break;
-    }
-  }
-  return success;
-}
-
 int main(int argc, char **argv) {
-
   const char *program_name = "mat_mul.cl";
   const char *kernel_name = "mat_mul";
 
   if (argc > 1) {
-    N = atoi(argv[1]);
+    n = atoi(argv[1]);
   }
 
-  printf("Matrix Multiplication with N=%d\n", N);
+  printf("Matrix Multiplication with n=%d\n", n);
 
   // -------------------- SETUP -------------------- //
   init_matrices();
@@ -150,8 +116,7 @@ int main(int argc, char **argv) {
   // if I move this part into a separate function --> segmentation fault
 
   kernel_code code = load_code(program_name);
-  program = clCreateProgramWithSource(context, 1, &code.code,
-                                      (const size_t *)&code.size, &ret);
+  program = clCreateProgramWithSource(context, 1, &code.code, (const size_t *)&code.size, &ret);
 
   ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
 
@@ -160,8 +125,7 @@ int main(int argc, char **argv) {
     char *msg = malloc(size);
     size_t msg_size;
 
-    clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, msg,
-                          &msg_size);
+    clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, msg, &msg_size);
 
     printf("Build Error:\n%s", msg);
     exit(1);

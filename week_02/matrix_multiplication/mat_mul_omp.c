@@ -1,46 +1,15 @@
-#pragma once
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "common/headers.h"
 #include "common/utils.h"
+#include "matrix/helpers.h"
 #include "matrix/matrix.h"
-
-static int N = 1000;
-static Matrix mtx_A;
-static Matrix mtx_B;
-static Matrix mtx_RES;
-
-void init_matrices() {
-  mtx_A = create_matrix(N, N);
-  mtx_B = create_matrix(N, N);
-
-  fill_matrices(mtx_A, mtx_B, N);
-
-  mtx_RES = create_matrix(N, N);
-}
-
-bool check() {
-  bool success = true;
-  for (long long i = 0; i < N; i++) {
-    for (long long j = 0; j < N; j++) {
-      if (mtx_RES[i * N + j] == i * j)
-        continue;
-      success = false;
-      break;
-    }
-  }
-
-  return success;
-}
 
 int main(int argc, char **argv) {
 
   if (argc > 1) {
-    N = atoi(argv[1]);
+    n = atoi(argv[1]);
   }
 
-  printf("Matrix Multiplication with N=%d\n", N);
+  printf("Matrix Multiplication with n=%d\n", n);
 
   // -------------------- SETUP -------------------- //
   init_matrices();
@@ -50,13 +19,13 @@ int main(int argc, char **argv) {
 
   // ------------------- COMPUTE -------------------- //
   #pragma omp parallel for
-  for (long long i = 0; i < N; i++) {
-    for (long long j = 0; j < N; j++) {
+  for (size_t i = 0; i < n; i++) {
+    for (size_t j = 0; j < n; j++) {
       value_t sum = 0;
-      for (long long k = 0; k < N; k++) {
-        sum += mtx_A[i * N + k] * mtx_B[k * N + j];
+      for (size_t k = 0; k < n; k++) {
+        sum += mtx_a[i * n + k] * mtx_b[k * n + j];
       }
-      mtx_RES[i * N + j] = sum;
+      mtx_res[i * n + j] = sum;
     }
   }
 
@@ -69,9 +38,9 @@ int main(int argc, char **argv) {
   printf("Verification: %s\n", (success) ? "OK" : "FAILED");
 
   // ----------------- CLEAN UP ------------------ //
-  release_matrix(mtx_A);
-  release_matrix(mtx_B);
-  release_matrix(mtx_RES);
+  release_matrix(mtx_a);
+  release_matrix(mtx_b);
+  release_matrix(mtx_res);
 
   return (success) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -1,26 +1,26 @@
 #include "../common/headers.h"
 #include "matrix.h"
 
-Matrix create_matrix(int N, int M) {
+Matrix create_matrix(size_t n, size_t m) {
   // create data and index vector
-  return malloc(sizeof(value_t) * N * M);
+  return malloc(sizeof(value_t) * n * m);
 }
 
-void release_matrix(Matrix m) { free(m); }
+void release_matrix(Matrix mat) { free(mat); }
 
-void fill_matrices(Matrix A, Matrix B, int N) {
-  for (int i = 0; i < N; i++) {
-    for (int j = 0; j < N; j++) {
-      A[i * N + j] = i * j;             // some matrix - note: flattened indexing!
-      B[i * N + j] = (i == j) ? 1 : 0;  // identity matrix
+void fill_matrices(Matrix a, Matrix b, size_t n) {
+  for (size_t i = 0; i < n; i++) {
+    for (size_t j = 0; j < n; j++) {
+      a[i * n + j] = i * j;             // some matrix - note: flattened indexing!
+      b[i * n + j] = (i == j) ? 1 : 0;  // identity matrix
     }
   }
 }
 
-void print_matrix(Matrix m, int N, int M) {
-  for (int i = 0; i < N; i++) {
-    for (int j = 0; j < M; j++) {
-      printf("%f ", m[i * N + j]);
+void print_matrix(Matrix mat, size_t n, size_t m) {
+  for (size_t i = 0; i < n; i++) {
+    for (size_t j = 0; j < m; j++) {
+      printf("%f ", mat[i * n + j]);
     }
     printf("\n");
   }
