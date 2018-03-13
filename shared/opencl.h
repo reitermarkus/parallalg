@@ -11,7 +11,7 @@
   // #define CL_MEM_HOST_WRITE_ONLY 0
   // #undef CL_MEM_HOST_READ_ONLY
   // #define CL_MEM_HOST_READ_ONLY 0
-#elif
+#else
   #include <CL/cl.h>
 #endif
 
