@@ -3,7 +3,7 @@
 #include "matrix/matrix.h"
 #include "open_cl/open_cl.h"
 
-static int N = 1000;
+static int N = 4;
 static int dimension = 2;
 
 static Matrix mtx_a;
@@ -177,6 +177,12 @@ int main(int argc, char **argv) {
   // ------------------- CHECK ------------------- //
   bool success = check();
   printf("Verification: %s\n", (success) ? "OK" : "FAILED");
+
+  print_matrix(mtx_a, N, N);
+  printf("\n");
+  print_matrix(mtx_b, N, N);
+  printf("\n");
+  print_matrix(mtx_res, N, N);
 
   // ----------------- CLEAN UP ------------------ //
   release_matrix(mtx_a);

@@ -10,6 +10,8 @@ kernel void mat_mul(
     // global position in Y direction
     int row = get_global_id(1);
 
+    printf("col: %d, row: %d\n", col, row);
+
     float res = 0.0f;
 
     // compute result for one cell
