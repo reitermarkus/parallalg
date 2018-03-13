@@ -2,7 +2,7 @@ kernel void mat_mul(
     global float* res_mat,
     global float* mat_a,
     global float* mat_b,
-    const size_t n
+    const int n
 ) {
     // global position in X direction
     size_t col = get_global_id(0);
