@@ -16,3 +16,12 @@ void fill_matrices(Matrix A, Matrix B, int N) {
     }
   }
 }
+
+void print_matrix(Matrix m, int N, int M) {
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < M; j++) {
+      printf("%f ", m[i * N + j]);
+    }
+    printf("\n");
+  }
+}

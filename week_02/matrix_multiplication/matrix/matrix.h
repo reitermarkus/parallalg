@@ -11,4 +11,6 @@ void release_matrix(Matrix m);
 
 void fill_matrices(Matrix A, Matrix B, int N);
 
+void print_matrix(Matrix m, int N, int M);
+
 #endif
