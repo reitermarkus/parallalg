@@ -1,5 +1,5 @@
 OPT = -O3
-CC_FLAGS = -std=c11 -Werror -pedantic -I../../shared
+CC_FLAGS = -std=c11 -Werror -pedantic -I../../shared -D _POSIX_C_SOURCE=199309L
 OPENCL_FLAGS = -lOpenCL
 
 ifneq ($(OS), Windows_NT)
