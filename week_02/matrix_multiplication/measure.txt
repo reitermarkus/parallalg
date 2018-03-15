@@ -1,68 +1,68 @@
 Sequential:
 Matrix Multiplication with n=100
-Total time: 1.446ms
+Total time: 0.735ms
 Verification: OK
 
 Matrix Multiplication with n=200
-Total time: 15.050ms
+Total time: 5.822ms
 Verification: OK
 
 Matrix Multiplication with n=500
-Total time: 166.261ms
+Total time: 98.682ms
 Verification: OK
 
 Matrix Multiplication with n=1000
-Total time: 1754.740ms
+Total time: 845.310ms
 Verification: OK
 
 Matrix Multiplication with n=2000
-Total time: 38515.227ms
+Total time: 38610.669ms
 Verification: OK
 
 
 
 OpenMP:
 Matrix Multiplication with n=100
-Total time: 1.306ms
+Total time: 0.859ms
 Verification: OK
 
 Matrix Multiplication with n=200
-Total time: 4.809ms
+Total time: 1.405ms
 Verification: OK
 
 Matrix Multiplication with n=500
-Total time: 69.399ms
+Total time: 13.092ms
 Verification: OK
 
 Matrix Multiplication with n=1000
-Total time: 2317.882ms
+Total time: 370.256ms
 Verification: OK
 
 Matrix Multiplication with n=2000
-Total time: 21979.783ms
+Total time: 7749.620ms
 Verification: OK
 
 
 
 OpenCL:
 Matrix Multiplication with n=100
-Total time: 102.357ms
+Total time: 105.506ms
 Verification: OK
 
 Matrix Multiplication with n=200
-Total time: 95.175ms
+Total time: 102.461ms
 Verification: OK
 
 Matrix Multiplication with n=500
-Total time: 115.881ms
+Total time: 101.269ms
 Verification: OK
 
 Matrix Multiplication with n=1000
-Total time: 585.167ms
+Total time: 113.093ms
 Verification: OK
 
 Matrix Multiplication with n=2000
-Total time: 3954.872ms
+Total time: 258.403ms
 Verification: OK
 
 
