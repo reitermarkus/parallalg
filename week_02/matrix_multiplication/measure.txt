@@ -1,0 +1,69 @@
+Sequential:
+Matrix Multiplication with n=100
+Total time: 1.446ms
+Verification: OK
+
+Matrix Multiplication with n=200
+Total time: 15.050ms
+Verification: OK
+
+Matrix Multiplication with n=500
+Total time: 166.261ms
+Verification: OK
+
+Matrix Multiplication with n=1000
+Total time: 1754.740ms
+Verification: OK
+
+Matrix Multiplication with n=2000
+Total time: 38515.227ms
+Verification: OK
+
+
+
+OpenMP:
+Matrix Multiplication with n=100
+Total time: 1.306ms
+Verification: OK
+
+Matrix Multiplication with n=200
+Total time: 4.809ms
+Verification: OK
+
+Matrix Multiplication with n=500
+Total time: 69.399ms
+Verification: OK
+
+Matrix Multiplication with n=1000
+Total time: 2317.882ms
+Verification: OK
+
+Matrix Multiplication with n=2000
+Total time: 21979.783ms
+Verification: OK
+
+
+
+OpenCL:
+Matrix Multiplication with n=100
+Total time: 102.357ms
+Verification: OK
+
+Matrix Multiplication with n=200
+Total time: 95.175ms
+Verification: OK
+
+Matrix Multiplication with n=500
+Total time: 115.881ms
+Verification: OK
+
+Matrix Multiplication with n=1000
+Total time: 585.167ms
+Verification: OK
+
+Matrix Multiplication with n=2000
+Total time: 3954.872ms
+Verification: OK
+
+
+
