@@ -26,7 +26,7 @@ fn print_temperature(matrix: &Vec<f64>, n: usize, m: usize) {
 
       for x in (h_s * i)..(h_s * i + h_s) {
         for y in (w_s * j)..(w_s * j + w_s) {
-          let val = *matrix.get(x * n + y).unwrap();
+          let val = matrix[x * n + y];
           if val > max_t {
             max_t = val;
           }
@@ -38,7 +38,7 @@ fn print_temperature(matrix: &Vec<f64>, n: usize, m: usize) {
       let mut c = ((temp - min) / (max - min)) * colors.len() as f64;
       c = if c >= colors.len() as f64 { colors.len() as f64 - 1.0 } else if c < 0.0 { 0.0 } else { c };
 
-      print!("{}", colors.get(c as usize).unwrap());
+      print!("{}", colors[c as usize]);
     }
 
     // Right Wall
@@ -59,7 +59,7 @@ fn main() {
   // Add heat source in corner.
   let source_x = n / 4;
   let source_y = n / 4;
-  *matrix_a.get_mut(source_x * n + source_y).unwrap() += 60.0;
+  matrix_a[source_x * n + source_y] += 60.0;
 
   print_temperature(&matrix_a, n, n);
 
@@ -70,21 +70,21 @@ fn main() {
       for j in 0..n {
         // Center stays constant (the heat is still on).
         if i == source_x && j == source_y {
-          *matrix_b.get_mut(i * n + j).unwrap() = *matrix_a.get(i * n + j).unwrap();
+          matrix_b[i * n + j] = matrix_a[i * n + j];
           continue;
         }
 
         // Get current temperature at (i,j).
-        let tc = matrix_a.get(i * n + j).unwrap();
+        let tc = matrix_a[i * n + j];
 
         // Get temperatures left/right and up/down.
-        let tl = if j !=  0  { matrix_a.get(i * n + (j - 1)).unwrap() } else { tc };
-        let tr = if j != n - 1 { matrix_a.get(i * n + (j + 1)).unwrap() } else { tc };
-        let tu = if i !=  0  { matrix_a.get((i - 1) * n + j).unwrap() } else { tc };
-        let td = if i != n - 1 { matrix_a.get((i + 1) * n + j).unwrap() } else { tc };
+        let tl = if j !=  0  { matrix_a[i * n + (j - 1)] } else { tc };
+        let tr = if j != n - 1 { matrix_a[i * n + (j + 1)] } else { tc };
+        let tu = if i !=  0  { matrix_a[(i - 1) * n + j] } else { tc };
+        let td = if i != n - 1 { matrix_a[(i + 1) * n + j] } else { tc };
 
         // Update temperature at current point
-        *matrix_b.get_mut(i * n + j).unwrap() = tc + 0.2 * (tl + tr + tu + td + (-4.0 * tc));
+        matrix_b[i * n + j] = tc + 0.2 * (tl + tr + tu + td + (-4.0 * tc));
       }
     }
 
