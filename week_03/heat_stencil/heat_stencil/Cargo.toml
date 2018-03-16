@@ -1,0 +1,6 @@
+[package]
+name = "heat_stencil"
+version = "0.1.0"
+authors = ["Markus Reiter <me@reitermark.us>"]
+
+[dependencies]
