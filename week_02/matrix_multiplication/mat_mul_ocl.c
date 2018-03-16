@@ -93,6 +93,24 @@ void clean_up() {
   ret = clReleaseContext(context);
 }
 
+void create_program() {
+  kernel_code code = load_code("mat_mul.cl");
+  program = clCreateProgramWithSource(context, 1, &code.code, (const size_t *)&code.size, &ret);
+
+  ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+
+  if (ret != CL_SUCCESS) {
+    size_t size = 1 << 20; // 1MB
+    char *msg = malloc(size);
+    size_t msg_size;
+
+    clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, msg, &msg_size);
+
+    printf("Build Error:\n%s", msg);
+    exit(1);
+  }
+}
+
 int main(int argc, char **argv) {
   const char *program_name = "mat_mul.cl";
   const char *kernel_name = "mat_mul";
@@ -111,26 +129,7 @@ int main(int argc, char **argv) {
 
   init_platform();
   init_devices();
-
-  // --------------- CREATE PROGRAM ---------------- //
-  // if I move this part into a separate function --> segmentation fault
-
-  kernel_code code = load_code(program_name);
-  program = clCreateProgramWithSource(context, 1, &code.code, (const size_t *)&code.size, &ret);
-
-  ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
-
-  if (ret != CL_SUCCESS) {
-    size_t size = 1 << 20; // 1MB
-    char *msg = malloc(size);
-    size_t msg_size;
-
-    clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, msg, &msg_size);
-
-    printf("Build Error:\n%s", msg);
-    exit(1);
-  }
-
+  create_program();
   run_kernel(kernel_name);
   clean_up();
 
