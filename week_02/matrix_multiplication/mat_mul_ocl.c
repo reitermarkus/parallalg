@@ -1,5 +1,5 @@
 #include "common/headers.h"
-#include "common/utils.h"
+#include <utils.h>
 #include "matrix/matrix.h"
 #include "matrix/helpers.h"
 #include "open_cl/open_cl.h"

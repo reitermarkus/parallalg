@@ -56,3 +56,7 @@ dkms.conf
 *.pdf
 
 ../../\.vscode/
+
+*_ocl
+*_omp
+*_seq

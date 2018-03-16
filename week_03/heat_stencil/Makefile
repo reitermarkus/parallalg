@@ -18,32 +18,29 @@ ifneq ($(OS), Windows_NT)
   endif
 endif
 
-HEADERS=$(wildcard */*.h)
-COMMON_DEPENDENCIES=Makefile $(HEADERS)
+all: heat_stencil_seq heat_stencil_omp heat_stencil_ocl
 
-CFILES=$(wildcard */*.c)
+heat_stencil_seq: heat_stencil_seq.c
+	@$(CC) $(CC_FLAGS) heat_stencil_seq.c -o heat_stencil_seq
 
-all: mat_mul_seq mat_mul_omp mat_mul_ocl
+heat_stencil_omp: heat_stencil_omp.c
+	@$(CC) $(CC_FLAGS) heat_stencil_omp.c -o heat_stencil_omp -fopenmp
 
-mat_mul_seq: $(COMMON_DEPENDENCIES)
-	@$(CC) $(CC_FLAGS) $(CFILES) mat_mul_seq.c -o mat_mul_seq
+heat_stencil_ocl: heat_stencil_ocl.c
+	@$(CC) $(CC_FLAGS) heat_stencil_ocl.c -o heat_stencil_ocl $(OPENCL_FLAGS)
 
-mat_mul_omp: $(COMMON_DEPENDENCIES)
-	@$(CC) $(CC_FLAGS) $(CFILES) -w mat_mul_omp.c -o mat_mul_omp -fopenmp
-
-mat_mul_ocl: $(COMMON_DEPENDENCIES)
-	@$(CC) $(CC_FLAGS) $(CFILES) mat_mul_ocl.c -o mat_mul_ocl $(OPENCL_FLAGS)
-
-.PHONY: clean
+.PHONEY: clean
 clean:
-	$(RM) mat_mul_seq mat_mul_omp mat_mul_ocl
+	@rm heat_stencil_seq heat_stencil_omp heat_stencil_ocl
 
 run: all
 	@echo "Sequential:"
-	@./mat_mul_seq
+	@./heat_stencil_seq
 	@echo
 	@echo "OpenMP:"
-	@./mat_mul_omp
+	@./heat_stencil_omp
 	@echo
 	@echo "OpenCL:"
-	@./mat_mul_ocl
+	@./heat_stencil_ocl
+
+
