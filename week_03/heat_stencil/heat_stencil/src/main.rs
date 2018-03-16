@@ -1,3 +1,5 @@
+use std::time::{Instant, Duration};
+
 fn print_temperature(matrix: &Vec<f64>, n: usize, m: usize) {
   let colors = [' ', '.', '-', ':', '=', '+', '*', '#', '%', '@'];
 
@@ -48,6 +50,7 @@ fn print_temperature(matrix: &Vec<f64>, n: usize, m: usize) {
 }
 
 fn main() {
+  let total_bench = Instant::now();
   let n = 500;
 
   let mut matrix_a: Vec<f64> = vec![273.0; n * n];
@@ -95,4 +98,11 @@ fn main() {
       print_temperature(&matrix_a, n, n);
     }
   }
+
+  let into_ms = |x: Duration| (x.as_secs() * 1_000) + (x.subsec_nanos() / 1_000_000) as u64;
+
+  let total_bench_elapsed = total_bench.elapsed();
+  println!("┌────────────────────┬───────────┐");
+  println!("┃ Total              ┃ {:#6 } ms ┃", into_ms(total_bench_elapsed));
+  println!("┗━━━━━━━━━━━━━━━━━━━━┻━━━━━━━━━━━┛");
 }
