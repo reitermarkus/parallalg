@@ -4,42 +4,110 @@
 #include <utils.h>
 
 #include "common/helpers.h"
+#include "open_cl/open_cl.h"
+
+static const int dimension = 2;
+static int n = 500;
+
+static size_t vec_size;
+static Matrix mtx_temperature;
+static Matrix mtx_compute;
+
+static cl_mem dev_vec_temperature;
+static cl_mem dev_vec_compute;
+
+void init_platform() {
+  // initialize OpenCL local state variables
+  platform_id = NULL;
+  device_id = NULL;
+  command_queue = NULL;
+  program = NULL;
+  kernel = NULL;
+  context = NULL;
+
+  // ------------ Part A (resource management) ------------ //
+  ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
+  ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
+  context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
+  command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
+}
+
+void init_devices() {
+  // ------------ Part B (data management) ------------ //
+  vec_size = sizeof(value_t) * n * n;
+  dev_vec_temperature = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
+  dev_vec_compute = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, vec_size, NULL, &ret);
+  
+  ret = clEnqueueWriteBuffer(command_queue, dev_vec_temperature, CL_TRUE, 0, vec_size, &mtx_temperature[0], 0, NULL, NULL);
+  ret = clEnqueueWriteBuffer(command_queue, dev_vec_compute, CL_TRUE, 0, vec_size, &mtx_compute[0], 0, NULL, NULL);
+}
+
+void run_kernel(const char *kernel_name) {
+  kernel = clCreateKernel(program, kernel_name, &ret);
+  // TODO: set args
+
+  // 11) schedule kernel
+  size_t global_work_offset[2] = {0, 0};
+  size_t global_work_size[2] = {n, n};
+
+  // execute kernel on device
+  ret = clEnqueueNDRangeKernel(command_queue, kernel, dimension, global_work_offset, global_work_size, NULL, 0, NULL, NULL);
+
+  ret = clEnqueueReadBuffer(command_queue, dev_vec_compute, CL_TRUE, 0, vec_size, &mtx_compute[0], 0, NULL, NULL);
+}
+
+void clean_up() {
+  // ------------ Part D (cleanup) ------------ //
+
+  // wait for completed operations (there should be none)
+  ret = clFlush(command_queue);
+  ret = clFinish(command_queue);
+  ret = clReleaseKernel(kernel);
+  ret = clReleaseProgram(program);
+
+  // free device memory
+  ret = clReleaseMemObject(dev_vec_temperature);
+  ret = clReleaseMemObject(dev_vec_compute);
+
+  // free management resources
+  ret = clReleaseCommandQueue(command_queue);
+  ret = clReleaseContext(context);
+}
 
 int main(int argc, char** argv) {
 
     // 'parsing' optional input parameter = problem size
-    int N = 500;
     if (argc > 1) {
-        N = atoi(argv[1]);
+        n = atoi(argv[1]);
     }
-    int T = N*100;
-    printf("Computing heat-distribution for room size N=%d for T=%d timesteps\n", N, T);
+    int T = n*100;
+    printf("Computing heat-distribution for room size n=%d for T=%d timesteps\n", n, T);
 
 
     // ---------- setup ----------
 
     // create a buffer for storing temperature fields
-    Matrix A = create_matrix(N,N);
+    mtx_temperature = create_matrix(n,n);
 
-    // set up initial conditions in A
-    for(int i = 0; i<N; i++) {
-        for(int j = 0; j<N; j++) {
-            A[i*N+j] = 273;             // temperature is 0°C everywhere (273K)
+    // set up initial conditions in mtx_temperature
+    for(int i = 0; i<n; i++) {
+        for(int j = 0; j<n; j++) {
+            mtx_temperature[i*n+j] = 273;             // temperature is 0°C everywhere (273K)
         }
     }
 
     // and there is a heat source in one corner
-    int source_x = N/4;
-    int source_y = N/4;
-    A[source_x*N+source_y] = 273 + 60;
+    int source_x = n/4;
+    int source_y = n/4;
+    mtx_temperature[source_x*n+source_y] = 273 + 60;
 
     printf("Initial:\n");
-    print_temperature(A,N,N);
+    print_temperature(mtx_temperature,n,n);
 
     // ---------- compute ----------
 
     // create a second buffer for the computation
-    Matrix B = create_matrix(N,N);
+    mtx_compute = create_matrix(n,n);
 
     timestamp begin = now();
 
@@ -52,38 +120,38 @@ int main(int argc, char** argv) {
     for(int t=0; t<T; t++) {
 
         // .. we propagate the temperature
-        for(long long i = 0; i<N; i++) {
-            for(long long j = 0; j<N; j++) {
+        for(long long i = 0; i<n; i++) {
+            for(long long j = 0; j<n; j++) {
 
                 // center stays constant (the heat is still on)
                 if (i == source_x && j == source_y) {
-                    B[i*N+j] = A[i*N+j];
+                    mtx_compute[i*n+j] = mtx_temperature[i*n+j];
                     continue;
                 }
 
                 // get current temperature at (i,j)
-                value_t tc = A[i*N+j];
+                value_t tc = mtx_temperature[i*n+j];
 
                 // get temperatures left/right and up/down
-                value_t tl = ( j !=  0  ) ? A[i*N+(j-1)] : tc;
-                value_t tr = ( j != N-1 ) ? A[i*N+(j+1)] : tc;
-                value_t tu = ( i !=  0  ) ? A[(i-1)*N+j] : tc;
-                value_t td = ( i != N-1 ) ? A[(i+1)*N+j] : tc;
+                value_t tl = ( j !=  0  ) ? mtx_temperature[i*n+(j-1)] : tc;
+                value_t tr = ( j != n-1 ) ? mtx_temperature[i*n+(j+1)] : tc;
+                value_t tu = ( i !=  0  ) ? mtx_temperature[(i-1)*n+j] : tc;
+                value_t td = ( i != n-1 ) ? mtx_temperature[(i+1)*n+j] : tc;
 
                 // update temperature at current point
-                B[i*N+j] = tc + 0.2 * (tl + tr + tu + td + (-4*tc));
+                mtx_compute[i*n+j] = tc + 0.2 * (tl + tr + tu + td + (-4*tc));
             }
         }
 
         // swap matrixes (just pointers, not content)
-        Matrix H = A;
-        A = B;
-        B = H;
+        Matrix H = mtx_temperature;
+        mtx_temperature = mtx_compute;
+        mtx_compute = H;
 
         // show intermediate step
         if (!(t%1000)) {
             printf("Step t=%d:\n", t);
-            print_temperature(A,N,N);
+            print_temperature(mtx_temperature,n,n);
         }
     }
 
@@ -94,18 +162,18 @@ int main(int argc, char** argv) {
     timestamp end = now();
     printf("Total time: %.3fms\n", (end-begin)*1000);
 
-    release_matrix(B);
+    release_matrix(mtx_compute);
 
 
     // ---------- check ----------
 
     printf("Final:\n");
-    print_temperature(A,N,N);
+    print_temperature(mtx_temperature,n,n);
 
     bool success = true;
-    for(long long i = 0; i<N; i++) {
-        for(long long j = 0; j<N; j++) {
-            value_t temp = A[i*N+j];
+    for(long long i = 0; i<n; i++) {
+        for(long long j = 0; j<n; j++) {
+            value_t temp = mtx_temperature[i*n+j];
             if (273 <= temp && temp <= 273+60) continue;
             success = false;
             break;
@@ -116,7 +184,7 @@ int main(int argc, char** argv) {
 
     // ---------- cleanup ----------
 
-    release_matrix(A);
+    release_matrix(mtx_temperature);
 
     // done
     return (success) ? EXIT_SUCCESS : EXIT_FAILURE;
