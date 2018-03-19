@@ -49,10 +49,10 @@ int main(int argc, char** argv) {
 
 
     // for each time step ..
-    #pragma omp parallel for
     for(int t=0; t<T; t++) {
 
         // .. we propagate the temperature
+        #pragma omp parallel for
         for(long long i = 0; i<N; i++) {
             for(long long j = 0; j<N; j++) {
 
@@ -83,11 +83,8 @@ int main(int argc, char** argv) {
 
         // show intermediate step
         if (!(t % 1000)) {
-            #pragma omp critical
-            {
-              printf("Step t=%d:\n", t);
-              print_temperature(A, N, N);
-            }
+            printf("Step t=%d:\n", t);
+            print_temperature(A, N, N);
         }
     }
 
