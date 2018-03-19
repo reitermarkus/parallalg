@@ -3,16 +3,16 @@
 typedef float value_t;
 typedef value_t* Matrix;
 
-Matrix createMatrix(int N, int M) {
+Matrix create_matrix(int N, int M) {
     // create data and index vector
     return malloc(sizeof(value_t)*N*M);
 }
 
-void releaseMatrix(Matrix m) {
+void release_matrix(Matrix m) {
     free(m);
 }
 
-void printTemperature(Matrix m, int N, int M) {
+void print_temperature(Matrix m, int N, int M) {
     const char* colors = " .-:=+*#%@";
     const int numColors = 10;
 

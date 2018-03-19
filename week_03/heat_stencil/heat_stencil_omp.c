@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
     // ---------- setup ----------
 
     // create a buffer for storing temperature fields
-    Matrix A = createMatrix(N,N);
+    Matrix A = create_matrix(N,N);
 
     // set up initial conditions in A
     for(int i = 0; i<N; i++) {
@@ -34,12 +34,12 @@ int main(int argc, char** argv) {
     A[source_x*N+source_y] = 273 + 60;
 
     printf("Initial:\n");
-    printTemperature(A,N,N);
+    print_temperature(A,N,N);
 
     // ---------- compute ----------
 
     // create a second buffer for the computation
-    Matrix B = createMatrix(N,N);
+    Matrix B = create_matrix(N,N);
 
     timestamp begin = now();
 
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
             #pragma omp critical
             {
               printf("Step t=%d:\n", t);
-              printTemperature(A, N, N);
+              print_temperature(A, N, N);
             }
         }
     }
@@ -98,13 +98,13 @@ int main(int argc, char** argv) {
     timestamp end = now();
     printf("Total time: %.3fms\n", (end-begin)*1000);
 
-    releaseMatrix(B);
+    release_matrix(B);
 
 
     // ---------- check ----------
 
     printf("Final:\n");
-    printTemperature(A,N,N);
+    print_temperature(A,N,N);
 
     bool success = true;
     for(long long i = 0; i<N; i++) {
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
 
     // ---------- cleanup ----------
 
-    releaseMatrix(A);
+    release_matrix(A);
 
     // done
     return (success) ? EXIT_SUCCESS : EXIT_FAILURE;
