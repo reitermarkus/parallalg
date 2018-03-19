@@ -4,3 +4,13 @@ version = "0.1.0"
 authors = ["Markus Reiter <me@reitermark.us>"]
 
 [dependencies]
+rayon = "0.9"
+crossbeam = "*"
+
+[[bin]]
+name = "heat_stencil_seq"
+path = "src/main_seq.rs"
+
+[[bin]]
+name = "heat_stencil_par"
+path = "src/main_par.rs"
