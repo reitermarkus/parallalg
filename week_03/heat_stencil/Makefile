@@ -4,10 +4,8 @@ OPENCL_FLAGS = -lOpenCL
 ifneq ($(OS), Windows_NT)
   ifeq ($(shell uname -s), Darwin)
     ifeq ($(shell brew ls gcc &>/dev/null; echo $$?), 0)
-      LLVM_PREFIX = $(shell brew --prefix gcc)
-      CC = $(LLVM_PREFIX)/bin/gcc-7
-      INCLUDES += -I$(LLVM_PREFIX)/include
-      LDFLAGS += -L$(LLVM_PREFIX)/lib
+      GCC_PREFIX = $(shell brew --prefix gcc)
+      CC = $(GCC_PREFIX)/bin/gcc-7
       OPENCL_FLAGS = -framework OpenCL
     else
       $(error "GCC is not installed, run `brew install gcc`")
