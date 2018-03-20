@@ -45,7 +45,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "cl-sys"
 version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/cogciprocate/ocl#a065ca380dca6f757ea0ab8bc93979ef93e34b7e"
 dependencies = [
  "libc 0.2.39 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -141,7 +141,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "heat_stencil"
 version = "0.1.0"
 dependencies = [
- "ocl 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ocl 0.17.0 (git+https://github.com/cogciprocate/ocl)",
  "rayon 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -255,34 +255,34 @@ dependencies = [
 [[package]]
 name = "ocl"
 version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/cogciprocate/ocl#a065ca380dca6f757ea0ab8bc93979ef93e34b7e"
 dependencies = [
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "nodrop 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
- "num-traits 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)",
- "ocl-core 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ocl-core 0.8.0 (git+https://github.com/cogciprocate/ocl)",
  "qutex 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "ocl-core"
 version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/cogciprocate/ocl#a065ca380dca6f757ea0ab8bc93979ef93e34b7e"
 dependencies = [
  "bitflags 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cl-sys 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cl-sys 0.4.1 (git+https://github.com/cogciprocate/ocl)",
  "enum_primitive 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "num-traits 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)",
- "ocl-core-vector 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ocl-core-vector 0.1.0 (git+https://github.com/cogciprocate/ocl)",
  "rustc_version 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "ocl-core-vector"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+source = "git+https://github.com/cogciprocate/ocl#a065ca380dca6f757ea0ab8bc93979ef93e34b7e"
 dependencies = [
  "num 0.1.42 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -418,7 +418,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum bitflags 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b3c30d3802dfb7281680d6285f2ccdaa8c2d8fee41f93805dba5c4cf50dc23cf"
 "checksum cc 1.0.8 (registry+https://github.com/rust-lang/crates.io-index)" = "d9324127e719125ec8a16e6e509abc4c641e773621b50aea695af3f005656d61"
 "checksum cfg-if 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "d4c819a1287eb618df47cc647173c5c4c66ba19d888a6e50d605672aed3140de"
-"checksum cl-sys 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "052e750edad96f2058980bc8972d97ece68249a6d4f8aacf69f3e3b8088a0ba5"
+"checksum cl-sys 0.4.1 (git+https://github.com/cogciprocate/ocl)" = "<none>"
 "checksum crossbeam 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "24ce9782d4d5c53674646a6a4c1863a21a8fc0cb649b3c94dfc16e45071dea19"
 "checksum crossbeam-deque 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f739f8c5363aca78cfb059edf753d8f0d36908c348f3d8d1503f03d8b75d9cf3"
 "checksum crossbeam-epoch 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "59796cc6cbbdc6bb319161349db0c3250ec73ec7fcb763a51065ec4e2e158552"
@@ -444,9 +444,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum num-traits 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)" = "92e5113e9fd4cc14ded8e499429f396a20f98c772a47cc8622a736e1ec843c31"
 "checksum num-traits 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "dee092fcdf725aee04dd7da1d21debff559237d49ef1cb3e69bcb8ece44c7364"
 "checksum num_cpus 1.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c51a3322e4bca9d212ad9a158a02abc6934d005490c054a2778df73a70aa0a30"
-"checksum ocl 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)" = "904bf6a4f83402563abf7b139088bfbe44301bf0b8dbc1b05af3c7609ae7eb89"
-"checksum ocl-core 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "401464f72c24597b084e13af7839500f0e39180b7a457ae7983775eb5903426d"
-"checksum ocl-core-vector 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b4072920739958adeec5abedec51af70febc58f7fff0601aaa0827c1f3c8fefd"
+"checksum ocl 0.17.0 (git+https://github.com/cogciprocate/ocl)" = "<none>"
+"checksum ocl-core 0.8.0 (git+https://github.com/cogciprocate/ocl)" = "<none>"
+"checksum ocl-core-vector 0.1.0 (git+https://github.com/cogciprocate/ocl)" = "<none>"
 "checksum quote 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "7a6e920b65c65f10b2ae65c831a81a073a89edd28c7cce89475bff467ab4167a"
 "checksum qutex 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3c337721726a89a885d862570a5da290d833bc2eb32b7d02917b1e535d7b8638"
 "checksum rand 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "eba5f8cb59cc50ed56be8880a5c7b496bfd9bd26394e176bc67884094145c2c5"
