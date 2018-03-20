@@ -1,4 +1,5 @@
 extern crate ocl;
+use ocl::ProQue;
 
 mod print_temperature;
 use print_temperature::print_temperature;
@@ -6,54 +7,84 @@ use print_temperature::print_temperature;
 mod benchmark;
 use benchmark::benchmark;
 
-fn main() {
-  benchmark(|| {
-    let n = 500;
+fn temp() -> ocl::Result<()> {
+  let kernel_source = r#"
+    __kernel void calc_temp(__global float const* matrix_a, __global float* matrix_b, int n, int source_x, int source_y) {
+      size_t i = get_global_id(0);
+      size_t j = get_global_id(1);
 
-    let mut matrix_a: Vec<f64> = vec![273.0; n * n];
-    let mut matrix_b: Vec<f64> = vec![0.0; n * n];
+      // Center stays constant (the heat is still on).
+      if (i == source_x && j == source_y) {
+        matrix_b[i * n + j] = matrix_a[i * n + j];
+      } else {
+        // Get current temperature at (i,j).
+        float tc = matrix_a[i * n + j];
 
-    // Add heat source in corner.
-    let source_x = n / 4;
-    let source_y = n / 4;
-    matrix_a[source_x * n + source_y] += 60.0;
+        // Get temperatures left/right and up/down.
+        float tl = j !=  0     ? matrix_a[i * n + (j - 1)] : tc;
+        float tr = j != n - 1  ? matrix_a[i * n + (j + 1)] : tc;
+        float tu = i !=  0     ? matrix_a[(i - 1) * n + j] : tc;
+        float td = i != n - 1  ? matrix_a[(i + 1) * n + j] : tc;
 
-    print_temperature(&matrix_a, n, n);
-
-    let time_steps = n * 100;
-
-    for t in 0..time_steps {
-      for i in 0..n {
-        for j in 0..n {
-          // Center stays constant (the heat is still on).
-          if i == source_x && j == source_y {
-            matrix_b[i * n + j] = matrix_a[i * n + j];
-            continue;
-          }
-
-          // Get current temperature at (i,j).
-          let tc = matrix_a[i * n + j];
-
-          // Get temperatures left/right and up/down.
-          let tl = if j !=  0  { matrix_a[i * n + (j - 1)] } else { tc };
-          let tr = if j != n - 1 { matrix_a[i * n + (j + 1)] } else { tc };
-          let tu = if i !=  0  { matrix_a[(i - 1) * n + j] } else { tc };
-          let td = if i != n - 1 { matrix_a[(i + 1) * n + j] } else { tc };
-
-          // Update temperature at current point
-          matrix_b[i * n + j] = tc + 0.2 * (tl + tr + tu + td + (-4.0 * tc));
-        }
-      }
-
-      // Swap matrices.
-      let mut matrix_h = matrix_a;
-      matrix_a = matrix_b;
-      matrix_b = matrix_h;
-
-      if t % 1000 == 0 {
-        println!("Step t = {}:", t);
-        print_temperature(&matrix_a, n, n);
+        // Update temperature at current point
+        matrix_b[i * n + j] = tc + 0.2 * (tl + tr + tu + td + (-4.0 * tc));
       }
     }
-  });
+  "#;
+
+  let n = 500;
+
+  let pro_que = ProQue::builder().src(kernel_source)
+                                 .dims(n * n)
+                                 .build()?;
+
+  let matrix_a_buffer = pro_que.create_buffer::<f32>()?;
+  let matrix_b_buffer = pro_que.create_buffer::<f32>()?;
+
+  let mut matrix_a = vec![273.0; n * n];
+
+  // Add heat source in corner.
+  let source_x = n / 4;
+  let source_y = n / 4;
+  matrix_a[source_x * n + source_y] += 60.0;
+
+  matrix_a_buffer.write(&matrix_a).enq()?;
+
+  print_temperature(&matrix_a, n, n);
+
+  let time_steps = n * 100;
+
+
+  for t in 0..time_steps {
+    matrix_a_buffer.write(&matrix_a).enq()?;
+
+    let kernel = pro_que.kernel_builder("calc_temp")
+                        .global_work_offset([0, 0])
+                        .global_work_size([n, n])
+                        .arg(&matrix_a_buffer)
+                        .arg(&matrix_b_buffer)
+                        .arg(&n)
+                        .arg(&source_x)
+                        .arg(&source_y)
+                        .build()?;
+
+    unsafe {
+      kernel.enq()?;
+    }
+
+    matrix_b_buffer.read(&mut matrix_a).enq()?;
+
+    if t % 1000 == 0 {
+      println!("Step t = {}:", t);
+      print_temperature(&matrix_a, n, n);
+    }
+  }
+
+  Ok(())
+}
+
+fn main() {
+  if let Err(error) = benchmark(temp) {
+    panic!("{:?}", error);
+  }
 }

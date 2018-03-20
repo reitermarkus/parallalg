@@ -8,8 +8,8 @@ fn main() {
   benchmark(|| {
     let n = 500;
 
-    let mut matrix_a: Vec<f64> = vec![273.0; n * n];
-    let mut matrix_b: Vec<f64> = vec![0.0; n * n];
+    let mut matrix_a = vec![273.0; n * n];
+    let mut matrix_b = vec![0.0; n * n];
 
     // Add heat source in corner.
     let source_x = n / 4;
