@@ -1,5 +1,5 @@
 extern crate ocl;
-use ocl::ProQue;
+use ocl::{Buffer, ProQue};
 
 mod print_temperature;
 use print_temperature::print_temperature;
@@ -54,23 +54,23 @@ fn temp() -> ocl::Result<()> {
 
   let time_steps = n * 100;
 
+  let kernel = pro_que.kernel_builder("calc_temp")
+                      .global_work_offset([0, 0])
+                      .global_work_size([n, n])
+                      .arg_named("input", None::<&Buffer<f32>>)
+                      .arg_named("output", None::<&Buffer<f32>>)
+                      .arg(&n)
+                      .arg(&source_x)
+                      .arg(&source_y)
+                      .build()?;
 
   for t in 0..time_steps {
     matrix_a_buffer.write(&matrix_a).enq()?;
 
-    let kernel = pro_que.kernel_builder("calc_temp")
-                        .global_work_offset([0, 0])
-                        .global_work_size([n, n])
-                        .arg(&matrix_a_buffer)
-                        .arg(&matrix_b_buffer)
-                        .arg(&n)
-                        .arg(&source_x)
-                        .arg(&source_y)
-                        .build()?;
+    kernel.set_arg("input", Some(&matrix_a_buffer))?;
+    kernel.set_arg("output", Some(&matrix_b_buffer))?;
 
-    unsafe {
-      kernel.enq()?;
-    }
+    unsafe { kernel.enq()?; }
 
     matrix_b_buffer.read(&mut matrix_a).enq()?;
 
