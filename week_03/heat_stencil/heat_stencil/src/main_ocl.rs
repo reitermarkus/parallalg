@@ -38,9 +38,6 @@ fn temp() -> ocl::Result<()> {
                                  .dims(n * n)
                                  .build()?;
 
-  let matrix_a_buffer = pro_que.create_buffer::<f32>()?;
-  let matrix_b_buffer = pro_que.create_buffer::<f32>()?;
-
   let mut matrix_a = vec![273.0; n * n];
 
   // Add heat source in corner.
@@ -48,7 +45,8 @@ fn temp() -> ocl::Result<()> {
   let source_y = n / 4;
   matrix_a[source_x * n + source_y] += 60.0;
 
-  matrix_a_buffer.write(&matrix_a).enq()?;
+  let matrix_a_buffer = unsafe { pro_que.buffer_builder().use_host_slice(&matrix_a).build()? };
+  let matrix_b_buffer = pro_que.create_buffer::<f32>()?;
 
   print_temperature(&matrix_a, n, n);
 
@@ -65,8 +63,6 @@ fn temp() -> ocl::Result<()> {
                       .build()?;
 
   for t in 0..time_steps {
-    matrix_a_buffer.write(&matrix_a).enq()?;
-
     kernel.set_arg("input", Some(&matrix_a_buffer))?;
     kernel.set_arg("output", Some(&matrix_b_buffer))?;
 
