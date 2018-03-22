@@ -34,7 +34,7 @@ heat_stencil_ocl: $(COMMON_DEPENDENCIES)
 
 .PHONEY: clean
 clean:
-	@rm heat_stencil_seq heat_stencil_omp heat_stencil_ocl
+	$(RM) heat_stencil_seq heat_stencil_omp heat_stencil_ocl
 
 run: all
 	@echo "Sequential:"
