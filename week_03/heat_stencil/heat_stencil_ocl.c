@@ -10,11 +10,10 @@ static const int dimension = 2;
 static int n = 500;
 
 static size_t vec_size;
-static Matrix mtx_temperature;
-static Matrix mtx_compute;
+static Matrix matrix_a;
 
-static cl_mem dev_vec_temperature;
-static cl_mem dev_vec_compute;
+static cl_mem dev_vec_a;
+static cl_mem dev_vec_b;
 
 void init_platform() {
   // initialize OpenCL local state variables
@@ -35,11 +34,10 @@ void init_platform() {
 void init_devices() {
   // ------------ Part B (data management) ------------ //
   vec_size = sizeof(value_t) * n * n;
-  dev_vec_temperature = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
-  dev_vec_compute = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
+  dev_vec_a = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
+  dev_vec_b = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
 
-  ret = clEnqueueWriteBuffer(command_queue, dev_vec_temperature, CL_TRUE, 0, vec_size, &mtx_temperature[0], 0, NULL, NULL);
-  ret = clEnqueueWriteBuffer(command_queue, dev_vec_compute, CL_TRUE, 0, vec_size, &mtx_compute[0], 0, NULL, NULL);
+  ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, matrix_a, 0, NULL, NULL);
 }
 
 void create_program(const char* program_name) {
@@ -60,24 +58,6 @@ void create_program(const char* program_name) {
   }
 }
 
-void run_kernel(const char *kernel_name, int x, int y) {
-  kernel = clCreateKernel(program, kernel_name, &ret);
-  ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &dev_vec_temperature);
-  ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &dev_vec_compute);
-  ret = clSetKernelArg(kernel, 2, sizeof(x), &x);
-  ret = clSetKernelArg(kernel, 3, sizeof(y), &y);
-  ret = clSetKernelArg(kernel, 4, sizeof(n), &n);
-
-  // 11) schedule kernel
-  size_t global_work_offset[2] = {0, 0};
-  size_t global_work_size[2] = {n, n};
-
-  // execute kernel on device
-  ret = clEnqueueNDRangeKernel(command_queue, kernel, dimension, global_work_offset, global_work_size, NULL, 0, NULL, NULL);
-  ret = clEnqueueReadBuffer(command_queue, dev_vec_compute, CL_TRUE, 0, vec_size, (void *)mtx_compute, 0, NULL, NULL);
-  ret = clEnqueueReadBuffer(command_queue, dev_vec_temperature, CL_TRUE, 0, vec_size, (void *)mtx_temperature, 0, NULL, NULL);
-}
-
 void clean_up() {
   // ------------ Part D (cleanup) ------------ //
 
@@ -88,8 +68,8 @@ void clean_up() {
   ret = clReleaseProgram(program);
 
   // free device memory
-  ret = clReleaseMemObject(dev_vec_temperature);
-  ret = clReleaseMemObject(dev_vec_compute);
+  ret = clReleaseMemObject(dev_vec_a);
+  ret = clReleaseMemObject(dev_vec_b);
 
   // free management resources
   ret = clReleaseCommandQueue(command_queue);
@@ -107,7 +87,6 @@ void print(Matrix mtx) {
 
 int main(int argc, char** argv) {
   const char *program_name = "heat_stencil.cl";
-  const char *kernel_name = "heat_stencil";
 
   // 'parsing' optional input parameter = problem size
   if (argc > 1) {
@@ -117,27 +96,24 @@ int main(int argc, char** argv) {
   printf("Computing heat-distribution for room size n=%d for T=%d timesteps\n", n, T);
 
   // create a buffer for storing temperature fields
-  mtx_temperature = create_matrix(n,n);
+  matrix_a = create_matrix(n,n);
 
-  // set up initial conditions in mtx_temperature
+  // set up initial conditions in matrix_a
   for(int i = 0; i < n; i++) {
     for(int j = 0; j < n; j++) {
-      mtx_temperature[i * n + j] = 273.0f;             // temperature is 0°C everywhere (273K)
+      matrix_a[i * n + j] = 273.0f;             // temperature is 0°C everywhere (273K)
     }
   }
 
   // and there is a heat source in one corner
-  int source_x = n / 4;
-  int source_y = n / 4;
-  mtx_temperature[source_x * n + source_y] = 273.0f + 60.0f;
+  size_t source_x = n / 4;
+  size_t source_y = n / 4;
+  matrix_a[source_x * n + source_y] = 273.0f + 60.0f;
 
   printf("Initial:\n");
-  print_temperature(mtx_temperature, n, n);
+  print_temperature(matrix_a, n, n);
 
   // ---------- compute ----------
-
-  // create a second buffer for the computation
-  mtx_compute = create_matrix(n, n);
 
   timestamp begin = now();
 
@@ -145,35 +121,44 @@ int main(int argc, char** argv) {
   init_devices();
   create_program(program_name);
 
-  // for each time step ..
-  for(int t=0; t<T; t++) {
-    run_kernel(kernel_name, source_x, source_y);
+  // 11) schedule kernel
+  size_t global_work_offset[] = {0, 0};
+  size_t global_work_size[] = {n, n};
 
-    // swap matrixes (just pointers, not content)
-    Matrix tmp = mtx_temperature;
-    mtx_temperature = mtx_compute;
-    mtx_compute = tmp;
+  kernel = clCreateKernel(program, "calc_temp", &ret);
+  ret = clSetKernelArg(kernel, 2, sizeof(n), &n);
+  ret = clSetKernelArg(kernel, 3, sizeof(source_x), &source_x);
+  ret = clSetKernelArg(kernel, 4, sizeof(source_y), &source_y);
+
+  // for each time step ..
+  for(int t = 0; t < T; t++) {
+    ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &dev_vec_a);
+    ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &dev_vec_b);
+
+    // execute kernel on device
+    ret = clEnqueueNDRangeKernel(command_queue, kernel, dimension, global_work_offset, global_work_size, NULL, 0, NULL, NULL);
+
+    cl_mem* dev_vec_h = &dev_vec_a;
+    dev_vec_a = dev_vec_b;
+    dev_vec_b = *dev_vec_h;
 
     // show intermediate step
-    if (!(t%1000)) {
+    if (!(t % 1000)) {
+      ret = clEnqueueReadBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, matrix_a, 0, NULL, NULL);
       printf("Step t=%d:\n", t);
-      print_temperature(mtx_temperature,n,n);
+      print_temperature(matrix_a, n, n);
     }
   }
 
-
   timestamp end = now();
-  printf("Total time: %.3fms\n", (end - begin)*1000);
+  printf("Total time: %.3fms\n", (end - begin) * 1000);
 
   // ---------- check ----------
-
-  printf("Final:\n");
-  print_temperature(mtx_temperature, n, n);
 
   bool success = true;
   for(long long i = 0; i<n; i++) {
     for(long long j = 0; j<n; j++) {
-      value_t temp = mtx_temperature[i*n+j];
+      value_t temp = matrix_a[i*n+j];
       if (273.0f <= temp && temp <= 273.0f + 60.0f) continue;
       success = false;
       break;
@@ -185,8 +170,7 @@ int main(int argc, char** argv) {
   // ---------- cleanup ----------
 
   clean_up();
-  release_matrix(mtx_compute);
-  release_matrix(mtx_temperature);
+  release_matrix(matrix_a);
 
   // done
   return (success) ? EXIT_SUCCESS : EXIT_FAILURE;

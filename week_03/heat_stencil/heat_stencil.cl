@@ -1,26 +1,21 @@
-kernel void heat_stencil(
-    global float* temperature,
-    global float* compute,
-    const int heat_source_x,
-    const int heat_source_y,
-    const int n
-) {
+__kernel void calc_temp(__global float const* matrix_a, __global float* matrix_b, size_t n, size_t source_x, size_t source_y) {
+  size_t i = get_global_id(0);
+  size_t j = get_global_id(1);
 
-    size_t col = get_global_id(0);
-    size_t row = get_global_id(1);
+  // Center stays constant (the heat is still on).
+  if (i == source_x && j == source_y) {
+    matrix_b[i * n + j] = matrix_a[i * n + j];
+  } else {
+    // Get current temperature at (i,j).
+    float tc = matrix_a[i * n + j];
 
-    if (row == heat_source_x && col == heat_source_y) {
-        compute[row * n + col] = temperature[row * n + col];
-    } else {
-        float t_cur = temperature[row * n + col];
+    // Get temperatures left/right and up/down.
+    float tl = j !=  0     ? matrix_a[i * n + (j - 1)] : tc;
+    float tr = j != n - 1  ? matrix_a[i * n + (j + 1)] : tc;
+    float tu = i !=  0     ? matrix_a[(i - 1) * n + j] : tc;
+    float td = i != n - 1  ? matrix_a[(i + 1) * n + j] : tc;
 
-        // get temperatures left/right and up/down
-        float tl = ( col !=  0  ) ? temperature[row * n + (col-1)] : t_cur;
-        float tr = ( col != n-1 ) ? temperature[row * n + (col+1)] : t_cur;
-        float tu = ( row !=  0  ) ? temperature[(row-1) * n + col] : t_cur;
-        float td = ( row != n-1 ) ? temperature[(row+1) * n + col] : t_cur;
-
-        // update temperature at current point
-        compute[row * n + col] = t_cur + 0.2f * (tl + tr + tu + td + (-4 * t_cur));
-    }
+    // Update temperature at current point.
+    matrix_b[i * n + j] = tc + 0.2 * (tl + tr + tu + td + (-4.0 * tc));
+  }
 }
