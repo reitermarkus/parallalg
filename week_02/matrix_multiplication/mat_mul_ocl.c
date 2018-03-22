@@ -40,8 +40,8 @@ void init_devices() {
   dev_vec_b   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
   dev_vec_res = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, vec_size, NULL, &ret);
 
-  ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, &mtx_a[0], 0, NULL, NULL);
-  ret = clEnqueueWriteBuffer(command_queue, dev_vec_b, CL_TRUE, 0, vec_size, &mtx_b[0], 0, NULL, NULL);
+  ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, mtx_a, 0, NULL, NULL);
+  ret = clEnqueueWriteBuffer(command_queue, dev_vec_b, CL_TRUE, 0, vec_size, mtx_b, 0, NULL, NULL);
 }
 
 void run_kernel(const char *kernel_name) {
@@ -60,18 +60,12 @@ void run_kernel(const char *kernel_name) {
                                global_work_offset, global_work_size, NULL, 0,
                                NULL, NULL);
 
-  // dummy event, for waiting until kernel finish.
-  // without waiting for a dummy event this block of code should be in main
-  // method, otherwise --> segmentation fault
-  cl_event event;
-  clWaitForEvents(0, &event);
-
   // 12) transfere data back to host
 
   // CL_FALSE: clEnqueueReadBuffer queues a non-blocking read command and
   // returns if CL_TRUE: segmentation fault with compiler optimization flags -O2
   // or -O3
-  ret = clEnqueueReadBuffer(command_queue, dev_vec_res, CL_TRUE, 0, vec_size, &mtx_res[0], 0, NULL, NULL);
+  ret = clEnqueueReadBuffer(command_queue, dev_vec_res, CL_TRUE, 0, vec_size, mtx_res, 0, NULL, NULL);
 }
 
 void clean_up() {
