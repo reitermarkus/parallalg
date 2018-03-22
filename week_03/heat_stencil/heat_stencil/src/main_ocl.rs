@@ -1,6 +1,8 @@
 extern crate ocl;
 use ocl::{Buffer, ProQue};
 
+use std::mem;
+
 mod print_temperature;
 use print_temperature::print_temperature;
 
@@ -26,7 +28,7 @@ fn temp() -> ocl::Result<()> {
         float tu = i !=  0     ? matrix_a[(i - 1) * n + j] : tc;
         float td = i != n - 1  ? matrix_a[(i + 1) * n + j] : tc;
 
-        // Update temperature at current point
+        // Update temperature at current point.
         matrix_b[i * n + j] = tc + 0.2 * (tl + tr + tu + td + (-4.0 * tc));
       }
     }
@@ -45,8 +47,8 @@ fn temp() -> ocl::Result<()> {
   let source_y = n / 4;
   matrix_a[source_x * n + source_y] += 60.0;
 
-  let matrix_a_buffer = unsafe { pro_que.buffer_builder().use_host_slice(&matrix_a).build()? };
-  let matrix_b_buffer = pro_que.create_buffer::<f32>()?;
+  let mut matrix_a_buffer = pro_que.buffer_builder().copy_host_slice(&matrix_a).build()?;
+  let mut matrix_b_buffer = pro_que.create_buffer::<f32>()?;
 
   print_temperature(&matrix_a, n, n);
 
@@ -68,9 +70,10 @@ fn temp() -> ocl::Result<()> {
 
     unsafe { kernel.enq()?; }
 
-    matrix_b_buffer.read(&mut matrix_a).enq()?;
+    mem::swap(&mut matrix_a_buffer, &mut matrix_b_buffer);
 
     if t % 1000 == 0 {
+      matrix_a_buffer.read(&mut matrix_a).enq()?;
       println!("Step t = {}:", t);
       print_temperature(&matrix_a, n, n);
     }
