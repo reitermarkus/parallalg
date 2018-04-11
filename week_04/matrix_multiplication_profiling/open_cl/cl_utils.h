@@ -1,6 +1,5 @@
 #pragma once
 
-#include <CL/cl.h>
 #include <assert.h>
 #include <stdarg.h>
 #include "opencl.h"
