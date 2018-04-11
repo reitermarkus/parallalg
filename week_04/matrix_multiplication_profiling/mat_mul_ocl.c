@@ -3,6 +3,7 @@
 #include "matrix/matrix.h"
 #include "matrix/helpers.h"
 #include "open_cl/open_cl.h"
+#include "open_cl/cl_utils.h"
 
 static int dimension = 2;
 
@@ -52,59 +53,69 @@ void init_devices() {
 
   vec_size = sizeof(value_t) * n * n;
   dev_vec_a   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for matrix A");
   dev_vec_b   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for matrix B");
   dev_vec_res = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, vec_size, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for matrix C");
 
   ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, mtx_a, 0, NULL, &profiling_event);
+  CLU_ERRCHECK(ret, "Failed to write matrix A to device");
   print_profiling_info("Write matrix A into device memory");
   ret = clEnqueueWriteBuffer(command_queue, dev_vec_b, CL_TRUE, 0, vec_size, mtx_b, 0, NULL, &profiling_event);
+  CLU_ERRCHECK(ret, "Failed to write matrix B to device");
   print_profiling_info("Write matrix B into device memory");
 }
 
 void run_kernel(const char *kernel_name) {
   kernel = clCreateKernel(program, kernel_name, &ret);
-  ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &dev_vec_res);
-  ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &dev_vec_a);
-  ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), &dev_vec_b);
-  ret = clSetKernelArg(kernel, 3, sizeof(n), &n);
+  CLU_ERRCHECK(ret, "Failed to create mat_mul kernel from program");
+
+  cluSetKernelArguments(kernel, 4,
+    sizeof(cl_mem), (void *)&dev_vec_res,
+    sizeof(cl_mem), (void *)&dev_vec_a,
+    sizeof(cl_mem), (void *)&dev_vec_b,
+    sizeof(n), &n
+  );
 
   // 11) schedule kernel
   size_t global_work_offset[2] = {0, 0};
   size_t global_work_size[2] = {n, n};
 
   // execute kernel on device
-  ret = clEnqueueNDRangeKernel(command_queue, kernel, dimension, global_work_offset, global_work_size, NULL, 0, NULL, &profiling_event);
-  print_profiling_info("Run kernel"); 
+  CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, dimension,
+    global_work_offset, global_work_size, NULL, 0, NULL, &profiling_event), "Failed to enqueue 2D kernel");
+
+  print_profiling_info("Run kernel");
 
   // 12) transfere data back to host
-  ret = clEnqueueReadBuffer(command_queue, dev_vec_res, CL_TRUE, 0, vec_size, mtx_res, 0, NULL, &profiling_event);
-  print_profiling_info("Read result matrix from device to host");  
+  CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, dev_vec_res,
+    CL_TRUE, 0, vec_size, mtx_res, 0, NULL, &profiling_event), "Failed reading back result");
+
+  print_profiling_info("Read result matrix from device to host");
 }
 
 void clean_up() {
   // ------------ Part D (cleanup) ------------ //
 
   // wait for completed operations (there should be none)
-  ret = clFlush(command_queue);
-  ret = clFinish(command_queue);
-  ret = clReleaseKernel(kernel);
-  ret = clReleaseProgram(program);
+  CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
+  CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
+  CLU_ERRCHECK(clReleaseKernel(kernel),   "Failed to release kernel");
+  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
 
   // free device memory
-  ret = clReleaseMemObject(dev_vec_a);
-  ret = clReleaseMemObject(dev_vec_b);
-  ret = clReleaseMemObject(dev_vec_res);
+  CLU_ERRCHECK(clReleaseMemObject(dev_vec_a), "Failed to release Matrix A");
+  CLU_ERRCHECK(clReleaseMemObject(dev_vec_b), "Failed to release Matrix B");
+  CLU_ERRCHECK(clReleaseMemObject(dev_vec_res), "Failed to release Matrix C");
 
   // free management resources
-  ret = clReleaseCommandQueue(command_queue);
-  ret = clReleaseContext(context);
+  CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
+  CLU_ERRCHECK(clReleaseContext(context),            "Failed to release OpenCL context");
 }
 
 void create_program() {
-  kernel_code code = load_code("mat_mul.cl");
-  program = clCreateProgramWithSource(context, 1, &code.code, (const size_t *)&code.size, &ret);
-
-  ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+  program = cluBuildProgramFromFile(context, device_id, "mat_mul.cl", NULL);
 
   if (ret != CL_SUCCESS) {
     size_t size = 1 << 20; // 1MB

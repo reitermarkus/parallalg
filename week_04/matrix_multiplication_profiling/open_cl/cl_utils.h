@@ -53,7 +53,7 @@ cl_device_id cluInitDevice(size_t num, cl_context *out_context, cl_command_queue
   // get platform ids
   cl_uint ret_num_platforms;
   CLU_ERRCHECK(clGetPlatformIDs(0, NULL, &ret_num_platforms), "Failed to query number of ocl platforms");
-  cl_platform_id *ret_platforms = (cl_platform_id*)alloca(sizeof(cl_platform_id)*ret_num_platforms);
+  cl_platform_id *ret_platforms = (cl_platform_id*)alloca(sizeof(cl_platform_id) * ret_num_platforms);
   CLU_ERRCHECK(clGetPlatformIDs(ret_num_platforms, ret_platforms, NULL), "Failed to retrieve ocl platforms");
 
   // get device id of desired device
@@ -65,7 +65,7 @@ cl_device_id cluInitDevice(size_t num, cl_context *out_context, cl_command_queue
 
     if(num < ret_num_devices) {
       // desired device is on this platform, select
-      cl_device_id *ret_devices = (cl_device_id*)alloca(sizeof(cl_device_id)*ret_num_devices);
+      cl_device_id *ret_devices = (cl_device_id*)alloca(sizeof(cl_device_id) * ret_num_devices);
       CLU_ERRCHECK(clGetDeviceIDs(ret_platforms[i], CL_DEVICE_TYPE_ALL, ret_num_devices, ret_devices, NULL), "Failed to retrieve ocl devices");
       device_id = ret_devices[num];
     }
