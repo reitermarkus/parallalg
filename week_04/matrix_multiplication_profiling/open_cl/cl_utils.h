@@ -104,7 +104,7 @@ cl_program cluBuildProgramFromFile(cl_context context, cl_device_id device_id, c
   cl_int err;
 
   // create kernel programs from source
-  char *source_str = (char*)malloc(MAX_KERNEL_SOURCE * sizeof(char));
+  char *source_str = (char*)alloca(MAX_KERNEL_SOURCE * sizeof(char));
   cluLoadSource(fn, MAX_KERNEL_SOURCE, source_str);
   const char *sources[1] = { source_str };
   cl_program program = clCreateProgramWithSource(context, 1, sources, NULL, &err);
@@ -121,7 +121,6 @@ cl_program cluBuildProgramFromFile(cl_context context, cl_device_id device_id, c
     exit(-1);
   }
 
-  free(source_str);
   return program;
 }
 
