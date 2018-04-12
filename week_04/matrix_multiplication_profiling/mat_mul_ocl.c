@@ -41,8 +41,7 @@ void init_platform() {
   context = NULL;
 
   // ------------ Part A (resource management) ------------ //
-  ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
-  ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
+  device_id = cluInitDevice(0, &context, &command_queue);
   context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
   cl_command_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
   command_queue = clCreateCommandQueueWithProperties(context, device_id, properties , &ret);
