@@ -31,9 +31,9 @@ int main(int argc, char **argv) {
 
   timestamp end = now();
   // -------------------- END -------------------- //
-  printf("Total time: %.3fms\n", (end - begin) * 1000);
+  printf("Total time: %.3f ms\n", (end - begin) * 1000);
 
-  float mflops = (n * n * n) * 2 / (end - begin) / 1000000.0;
+  double mflops = n / 1000000.0 * n * n * 2.0 / (double)(end - begin);
   printf("MFLOPS: %.3f\n", mflops);
 
   // ------------------- CHECK ------------------- //

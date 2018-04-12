@@ -156,6 +156,9 @@ int main(int argc, char **argv) {
   printf("\nGPU total time measure: %f ms\n", event_total_time*1.0e-06);
   printf("CPU total time measure: %.3f ms\n", (end - begin) * 1000);
 
+  double mflops = n / 1000000.0 * n * n * 2.0 / (double)(end - begin);
+  printf("MFLOPS: %.3f\n", mflops);
+
   // ------------------- CHECK ------------------- //
   bool success = check();
   printf("\nVerification: %s\n", (success) ? "OK" : "FAILED");
