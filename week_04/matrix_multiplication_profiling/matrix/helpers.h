@@ -1,7 +1,7 @@
 #include "../common/headers.h"
 #include "matrix.h"
 
-int n = 100;
+int n = 1000;
 
 Matrix mtx_a;
 Matrix mtx_b;

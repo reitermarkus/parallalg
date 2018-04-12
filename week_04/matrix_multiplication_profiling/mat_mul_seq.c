@@ -32,6 +32,9 @@ int main(int argc, char **argv) {
   // -------------------- END -------------------- //
   printf("Total time: %.3fms\n", (end - begin) * 1000);
 
+  float mflops = (n * n * n) * 2 / (end - begin) / 1000000.0;
+  printf("MFLOPS: %.3f\n", mflops);
+
   // ------------------- CHECK ------------------- //
   bool success = check();
   printf("Verification: %s\n", (success) ? "OK" : "FAILED");
