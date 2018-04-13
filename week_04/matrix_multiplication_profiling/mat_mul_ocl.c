@@ -13,8 +13,6 @@ static cl_mem dev_vec_a;
 static cl_mem dev_vec_b;
 static cl_mem dev_vec_res;
 
-static cl_ulong event_start_time = (cl_ulong) 0;
-static cl_ulong event_end_time = (cl_ulong) 0;
 static cl_ulong event_total_time = (cl_ulong) 0;
 static size_t ev_return_bytes;
 
@@ -22,9 +20,11 @@ void print_profiling_info(const char *event_description) {
   // wait until event finishes
   ret = clWaitForEvents(1, &profiling_event);
   // get profiling data
+  cl_ulong event_start_time = (cl_ulong) 0;
+  cl_ulong event_end_time = (cl_ulong) 0;
   ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, &ev_return_bytes);
   ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, &ev_return_bytes);
-
+  
   unsigned long total = (unsigned long) (event_end_time - event_start_time);
   event_total_time += total;
   printf("%s:\n", event_description);
