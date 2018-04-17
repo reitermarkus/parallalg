@@ -6,8 +6,8 @@ use std::mem;
 mod print_temperature;
 use print_temperature::print_temperature;
 
+#[macro_use]
 mod benchmark;
-use benchmark::benchmark;
 
 fn temp() -> ocl::Result<()> {
   let kernel_source = r#"
@@ -65,26 +65,28 @@ fn temp() -> ocl::Result<()> {
                       .arg(&source_y)
                       .build()?;
 
-  for t in 0..time_steps {
-    kernel.set_arg("input", Some(&matrix_a_buffer))?;
-    kernel.set_arg("output", Some(&matrix_b_buffer))?;
+  benchmark! {
+    for t in 0..time_steps {
+      kernel.set_arg("input", Some(&matrix_a_buffer))?;
+      kernel.set_arg("output", Some(&matrix_b_buffer))?;
 
-    unsafe { kernel.enq()?; }
+      unsafe { kernel.enq()?; }
 
-    mem::swap(&mut matrix_a_buffer, &mut matrix_b_buffer);
+      mem::swap(&mut matrix_a_buffer, &mut matrix_b_buffer);
 
-    if t % 1000 == 0 {
-      matrix_a_buffer.read(&mut matrix_a).enq()?;
-      println!("Step t = {}:", t);
-      print_temperature(&matrix_a, n, n);
+      if t % 1000 == 0 {
+        matrix_a_buffer.read(&mut matrix_a).enq()?;
+        println!("Step t = {}:", t);
+        print_temperature(&matrix_a, n, n);
+      }
     }
-  }
+  };
 
   Ok(())
 }
 
 fn main() {
-  if let Err(error) = benchmark(temp) {
+  if let Err(error) = temp() {
     panic!("{:?}", error);
   }
 }

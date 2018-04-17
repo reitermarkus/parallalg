@@ -1,17 +1,23 @@
-use std::time::{Instant, Duration};
+#[macro_export]
+macro_rules! benchmark {
+  { $($b:tt)* } => {{
+    let into_ms = |x: std::time::Duration| (x.as_secs() * 1_000) + (x.subsec_nanos() / 1_000_000) as u64;
 
-pub fn benchmark<F, R>(closure: F) -> R where F: Fn() -> R {
+    let start = std::time::Instant::now();
 
-  let total_bench = Instant::now();
+    let e = {
+      $($b)*
+    };
 
-  let result = closure();
+    let elapsed = start.elapsed();
 
-  let into_ms = |x: Duration| (x.as_secs() * 1_000) + (x.subsec_nanos() / 1_000_000) as u64;
+    println!("┌────────────────────┬───────────┐");
+    println!("│ Total              │ {:#6 } ms │", into_ms(elapsed));
+    println!("└────────────────────┴───────────┘");
 
-  let total_bench_elapsed = total_bench.elapsed();
-  println!("┌────────────────────┬───────────┐");
-  println!("│ Total              │ {:#6 } ms │", into_ms(total_bench_elapsed));
-  println!("└────────────────────┴───────────┘");
 
-  result
+    println!("{:?}", e);
+
+    e
+  }};
 }
