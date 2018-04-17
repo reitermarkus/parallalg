@@ -28,7 +28,8 @@ void init_platform() {
   ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
   ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
   context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
-  command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
+  cl_command_queue_properties properties[] = {CL_QUEUE_PROPERTIES, 0};
+  command_queue = clCreateCommandQueueWithProperties(context, device_id, properties, &ret);
 }
 
 void init_devices() {
