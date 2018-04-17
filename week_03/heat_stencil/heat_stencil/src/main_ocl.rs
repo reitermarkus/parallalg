@@ -1,5 +1,5 @@
 extern crate ocl;
-use ocl::{Buffer, ProQue};
+use ocl::{Buffer, ProQue, Device, DeviceType, Platform};
 
 use std::mem;
 
@@ -38,6 +38,7 @@ fn temp() -> ocl::Result<()> {
 
   let pro_que = ProQue::builder().src(kernel_source)
                                  .dims(n * n)
+                                 .device(Device::list(Platform::list().first().unwrap(), Some(DeviceType::DEFAULT)).unwrap().first().unwrap())
                                  .build()?;
 
   let mut matrix_a = vec![273.0; n * n];
