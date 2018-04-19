@@ -5,7 +5,7 @@
 
 #include <matrix.h>
 #include "common/helpers.h"
-#include "open_cl/open_cl.h"
+#include "open_cl.h"
 
 static const int dimension = 2;
 static int n = 500;
