@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
   // ---------- cleanup ----------
 
   clean_up();
-  release_matrix(matrix_a);
+  free(matrix_a);
 
   // done
   return (success) ? EXIT_SUCCESS : EXIT_FAILURE;

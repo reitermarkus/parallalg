@@ -37,9 +37,9 @@ int main(int argc, char **argv) {
   printf("Verification: %s\n", (success) ? "OK" : "FAILED");
 
   // ----------------- CLEAN UP ------------------ //
-  release_matrix(mtx_a);
-  release_matrix(mtx_b);
-  release_matrix(mtx_res);
+  free(mtx_a);
+  free(mtx_b);
+  free(mtx_res);
 
   return (success) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

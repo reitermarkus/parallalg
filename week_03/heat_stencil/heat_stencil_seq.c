@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
     timestamp end = now();
     printf("Total time: %.3fms\n", (end-begin)*1000);
 
-    release_matrix(B);
+    free(B);
 
 
     // ---------- check ----------
@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
 
     // ---------- cleanup ----------
 
-    release_matrix(A);
+    free(A);
 
     // done
     return (success) ? EXIT_SUCCESS : EXIT_FAILURE;
