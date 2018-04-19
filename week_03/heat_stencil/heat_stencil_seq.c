@@ -3,6 +3,7 @@
 
 #include <utils.h>
 
+#include <matrix.h>
 #include "common/helpers.h"
 
 int main(int argc, char** argv) {

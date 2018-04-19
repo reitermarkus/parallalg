@@ -3,6 +3,7 @@
 
 #include <utils.h>
 
+#include <matrix.h>
 #include "common/helpers.h"
 #include "open_cl/open_cl.h"
 

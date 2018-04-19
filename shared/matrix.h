@@ -1,13 +1,18 @@
-#include "matrix.h"
+#pragma once
 
-#include <stdio.h>
+#include <stdlib.h>
+
+typedef float value_t;
+
+typedef value_t* Matrix;
 
 Matrix create_matrix(size_t n, size_t m) {
-  // create data and index vector
   return malloc(sizeof(value_t) * n * m);
 }
 
-void release_matrix(Matrix mat) { free(mat); }
+void release_matrix(Matrix mat) {
+  free(mat);
+}
 
 void fill_matrices(Matrix a, Matrix b, size_t n) {
   for (size_t i = 0; i < n; i++) {

@@ -1,16 +1,6 @@
 #pragma once
 
-typedef float value_t;
-typedef value_t* Matrix;
-
-Matrix create_matrix(int N, int M) {
-    // create data and index vector
-    return malloc(sizeof(value_t)*N*M);
-}
-
-void release_matrix(Matrix m) {
-    free(m);
-}
+#include <matrix.h>
 
 void print_temperature(Matrix m, int N, int M) {
     const char* colors = " .-:=+*#%@";

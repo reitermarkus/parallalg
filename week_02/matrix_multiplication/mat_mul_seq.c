@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <utils.h>
 #include "matrix/helpers.h"
-#include "matrix/matrix.h"
+#include <matrix.h>
 
 int main(int argc, char **argv) {
 
