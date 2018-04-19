@@ -142,9 +142,9 @@ int main(int argc, char** argv) {
     CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, dimension,
       global_work_offset, global_work_size, NULL, 0, NULL, NULL), "Failed to enqueue 2D kernel");
 
-    cl_mem* dev_vec_h = &dev_vec_a;
+    cl_mem dev_vec_h = dev_vec_a;
     dev_vec_a = dev_vec_b;
-    dev_vec_b = *dev_vec_h;
+    dev_vec_b = dev_vec_h;
 
     // show intermediate step
     if (!(t % 1000)) {
