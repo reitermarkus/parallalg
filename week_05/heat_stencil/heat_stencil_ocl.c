@@ -120,16 +120,19 @@ int main(int argc, char** argv) {
   // 11) schedule kernel
   size_t global_work_offset[] = {0, 0};
   size_t global_work_size[] = {n, n};
+  size_t local_work_size[] = {10, 10};
 
   kernel = clCreateKernel(program, "calc_temp", &ret);
   CLU_ERRCHECK(ret, "Failed to create calc_temp kernel from program");
 
-  ret = clSetKernelArg(kernel, 2, sizeof(n), &n);
+  ret = clSetKernelArg(kernel, 2, (local_work_size[0] + 2) * (local_work_size[1] + 2) * sizeof(float), NULL);
   CLU_ERRCHECK(ret, "Failed to set kernel argument with index 2");
-  ret = clSetKernelArg(kernel, 3, sizeof(source_x), &source_x);
+  ret = clSetKernelArg(kernel, 3, sizeof(n), &n);
   CLU_ERRCHECK(ret, "Failed to set kernel argument with index 3");
-  ret = clSetKernelArg(kernel, 4, sizeof(source_y), &source_y);
+  ret = clSetKernelArg(kernel, 4, sizeof(source_x), &source_x);
   CLU_ERRCHECK(ret, "Failed to set kernel argument with index 4");
+  ret = clSetKernelArg(kernel, 5, sizeof(source_y), &source_y);
+  CLU_ERRCHECK(ret, "Failed to set kernel argument with index 5");
 
   // for each time step ..
   for (int t = 0; t < T; t++) {
@@ -140,7 +143,7 @@ int main(int argc, char** argv) {
 
     // execute kernel on device
     CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, dimension,
-      global_work_offset, global_work_size, NULL, 0, NULL, NULL), "Failed to enqueue 2D kernel");
+      global_work_offset, global_work_size, local_work_size, 0, NULL, NULL), "Failed to enqueue 2D kernel");
 
     cl_mem dev_vec_h = dev_vec_a;
     dev_vec_a = dev_vec_b;
