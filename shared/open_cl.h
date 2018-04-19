@@ -1,32 +1,38 @@
 #pragma once
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "opencl.h"
 
 typedef struct kernel_code {
-  const char *code;
+  const char* code;
   size_t size;
 } kernel_code;
 
 kernel_code load_code(const char *filename) {
-  size_t MAX_SOURCE_SIZE = 0x100000;
-
   FILE *fp;
 
   /* Load the source code containing the kernel*/
-  fp = fopen(filename, "r");
+  fp = fopen(filename, "rb");
   if (!fp) {
     fprintf(stderr, "Failed to load kernel from file %s\n", filename);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
-  kernel_code res;
-  res.code = (char *)malloc(MAX_SOURCE_SIZE);
-  res.size = fread((char *)res.code, 1, MAX_SOURCE_SIZE, fp);
+  fseek(fp, 0, SEEK_END);
+  size_t size = ftell(fp);
+  rewind(fp);
+
+  char* code = (char*)calloc(size + 1, sizeof(char));
+  fread(code, sizeof(char), size, fp);
+
   fclose(fp);
 
-  return res;
+  return (kernel_code){
+    code,
+    size,
+  };
 }
 
 void release_code(kernel_code code) { free((char *)code.code); }
