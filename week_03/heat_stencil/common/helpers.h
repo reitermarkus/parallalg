@@ -11,29 +11,29 @@ void print_temperature(Matrix mat, int m, int n) {
   const value_t min = 273 + 0;
 
   // set the 'render' resolution
-  int h = 30;
-  int w = 50;
+  const int h = 30;
+  const int w = 50;
 
   // step size in each dimension
-  int sh = m / h;
-  int sw = n / w;
+  const int sh = m / h;
+  const int sw = n / w;
 
   // upper wall
-  for (int i = 0; i < w + 2; i++) {
+  for (size_t i = 0; i < w + 2; i++) {
     printf("X");
   }
   printf("\n");
 
   // room
-  for (int i = 0; i < h; i++) {
+  for (size_t i = 0; i < h; i++) {
     // left wall
     printf("X");
     // actual room
-    for (int j = 0; j < w; j++) {
+    for (size_t j = 0; j < w; j++) {
       // get max temperature in this tile
       value_t max_t = 0;
-      for (int x = sh * i; x < sh * i + sh; x++) {
-        for (int y = sw * j; y < sw * j + sw; y++) {
+      for (size_t x = sh * i; x < sh * i + sh; x++) {
+        for (size_t y = sw * j; y < sw * j + sw; y++) {
           max_t = (max_t < mat[x * m + y]) ? mat[x * m + y] : max_t;
         }
       }
@@ -51,7 +51,7 @@ void print_temperature(Matrix mat, int m, int n) {
   }
 
   // lower wall
-  for (int i = 0; i < w + 2; i++) {
+  for (size_t i = 0; i < w + 2; i++) {
     printf("X");
   }
   printf("\n");
