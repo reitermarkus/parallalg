@@ -2,7 +2,7 @@
 
 #include <matrix.h>
 
-void print_temperature(Matrix m, int N, int M) {
+void print_temperature(Matrix mat, int m, int n) {
   const char* colors = " .-:=+*#%@";
   const int numColors = 10;
 
@@ -11,30 +11,30 @@ void print_temperature(Matrix m, int N, int M) {
   const value_t min = 273 + 0;
 
   // set the 'render' resolution
-  int H = 30;
-  int W = 50;
+  int h = 30;
+  int w = 50;
 
   // step size in each dimension
-  int sH = N / H;
-  int sW = M / W;
+  int sh = m / h;
+  int sw = n / w;
 
   // upper wall
-  for (int i = 0; i < W + 2; i++) {
+  for (int i = 0; i < w + 2; i++) {
     printf("X");
   }
   printf("\n");
 
   // room
-  for (int i = 0; i < H; i++) {
+  for (int i = 0; i < h; i++) {
     // left wall
     printf("X");
     // actual room
-    for (int j = 0; j < W; j++) {
+    for (int j = 0; j < w; j++) {
       // get max temperature in this tile
       value_t max_t = 0;
-      for (int x = sH * i; x < sH * i + sH; x++) {
-        for (int y = sW * j; y < sW * j + sW; y++) {
-          max_t = (max_t < m[x * N + y]) ? m[x * N + y] : max_t;
+      for (int x = sh * i; x < sh * i + sh; x++) {
+        for (int y = sw * j; y < sw * j + sw; y++) {
+          max_t = (max_t < mat[x * m + y]) ? mat[x * m + y] : max_t;
         }
       }
       value_t temp = max_t;
@@ -51,7 +51,7 @@ void print_temperature(Matrix m, int N, int M) {
   }
 
   // lower wall
-  for (int i = 0; i < W + 2; i++) {
+  for (int i = 0; i < w + 2; i++) {
     printf("X");
   }
   printf("\n");
