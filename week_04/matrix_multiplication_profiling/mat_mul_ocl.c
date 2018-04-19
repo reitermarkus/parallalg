@@ -2,7 +2,7 @@
 #include <utils.h>
 #include <matrix.h>
 #include "open_cl.h"
-#include "open_cl/cl_utils.h"
+#include "cl_utils.h"
 
 static int dimension = 2;
 
