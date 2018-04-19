@@ -5,6 +5,7 @@
 #include "matrix.h"
 #include "common/helpers.h"
 #include "open_cl.h"
+#include "cl_utils.h"
 
 static const int dimension = 2;
 static unsigned long n = 500;
@@ -35,9 +36,12 @@ void init_devices() {
   // ------------ Part B (data management) ------------ //
   vec_size = sizeof(value_t) * n * n;
   dev_vec_a = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for vector A");
   dev_vec_b = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for vector B");
 
   ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, matrix_a, 0, NULL, NULL);
+  CLU_ERRCHECK(ret, "Failed to write vector A to device");
 }
 
 void create_program(const char* program_name) {
@@ -62,18 +66,18 @@ void clean_up() {
   // ------------ Part D (cleanup) ------------ //
 
   // wait for completed operations (there should be none)
-  ret = clFlush(command_queue);
-  ret = clFinish(command_queue);
-  ret = clReleaseKernel(kernel);
-  ret = clReleaseProgram(program);
+  CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
+  CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
+  CLU_ERRCHECK(clReleaseKernel(kernel),   "Failed to release kernel");
+  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
 
   // free device memory
-  ret = clReleaseMemObject(dev_vec_a);
-  ret = clReleaseMemObject(dev_vec_b);
+  CLU_ERRCHECK(clReleaseMemObject(dev_vec_a), "Failed to release Matrix A");
+  CLU_ERRCHECK(clReleaseMemObject(dev_vec_b), "Failed to release Matrix B");
 
   // free management resources
-  ret = clReleaseCommandQueue(command_queue);
-  ret = clReleaseContext(context);
+  CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
+  CLU_ERRCHECK(clReleaseContext(context),            "Failed to release OpenCL context");
 }
 
 int main(int argc, char** argv) {
@@ -117,6 +121,8 @@ int main(int argc, char** argv) {
   size_t global_work_size[] = {n, n};
 
   kernel = clCreateKernel(program, "calc_temp", &ret);
+  CLU_ERRCHECK(ret, "Failed to create calc_temp kernel from program");
+
   ret = clSetKernelArg(kernel, 2, sizeof(n), &n);
   ret = clSetKernelArg(kernel, 3, sizeof(source_x), &source_x);
   ret = clSetKernelArg(kernel, 4, sizeof(source_y), &source_y);
@@ -127,7 +133,8 @@ int main(int argc, char** argv) {
     ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &dev_vec_b);
 
     // execute kernel on device
-    ret = clEnqueueNDRangeKernel(command_queue, kernel, dimension, global_work_offset, global_work_size, NULL, 0, NULL, NULL);
+    CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, dimension,
+      global_work_offset, global_work_size, NULL, 0, NULL, NULL), "Failed to enqueue 2D kernel");
 
     cl_mem* dev_vec_h = &dev_vec_a;
     dev_vec_a = dev_vec_b;
@@ -135,7 +142,9 @@ int main(int argc, char** argv) {
 
     // show intermediate step
     if (!(t % 1000)) {
-      ret = clEnqueueReadBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, matrix_a, 0, NULL, NULL);
+      CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, dev_vec_a,
+        CL_TRUE, 0, vec_size, matrix_a, 0, NULL, NULL), "Failed reading back result");
+
       printf("Step t=%d:\n", t);
       print_temperature(matrix_a, n, n);
     }
