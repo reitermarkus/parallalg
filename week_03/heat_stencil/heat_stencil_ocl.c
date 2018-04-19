@@ -50,7 +50,7 @@ void create_program(const char* program_name) {
 
   if (ret != CL_SUCCESS) {
     size_t size = 1 << 20; // 1MB
-    char *msg = malloc(size);
+    char* msg = malloc(size);
     size_t msg_size;
 
     clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, msg, &msg_size);
@@ -81,14 +81,14 @@ void clean_up() {
 void print(Matrix mtx) {
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-        printf("%f ", mtx[i * n + j]);
+      printf("%f ", mtx[i * n + j]);
     }
     puts("");
   }
 }
 
 int main(int argc, char** argv) {
-  const char *program_name = "heat_stencil.cl";
+  const char* program_name = "heat_stencil.cl";
 
   // 'parsing' optional input parameter = problem size
   if (argc > 1) {
@@ -98,12 +98,12 @@ int main(int argc, char** argv) {
   printf("Computing heat-distribution for room size n=%d for T=%d timesteps\n", n, T);
 
   // create a buffer for storing temperature fields
-  matrix_a = create_matrix(n,n);
+  matrix_a = create_matrix(n, n);
 
   // set up initial conditions in matrix_a
-  for(int i = 0; i < n; i++) {
-    for(int j = 0; j < n; j++) {
-      matrix_a[i * n + j] = 273.0f;             // temperature is 0°C everywhere (273K)
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      matrix_a[i * n + j] = 273.0f; // temperature is 0°C everywhere (273K)
     }
   }
 
@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
   ret = clSetKernelArg(kernel, 4, sizeof(source_y), &source_y);
 
   // for each time step ..
-  for(int t = 0; t < T; t++) {
+  for (int t = 0; t < T; t++) {
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &dev_vec_a);
     ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &dev_vec_b);
 
@@ -158,9 +158,9 @@ int main(int argc, char** argv) {
   // ---------- check ----------
 
   bool success = true;
-  for(long long i = 0; i<n; i++) {
-    for(long long j = 0; j<n; j++) {
-      value_t temp = matrix_a[i*n+j];
+  for (long long i = 0; i < n; i++) {
+    for (long long j = 0; j < n; j++) {
+      value_t temp = matrix_a[i * n + j];
       if (273.0f <= temp && temp <= 273.0f + 60.0f) continue;
       success = false;
       break;

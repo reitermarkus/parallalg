@@ -45,7 +45,7 @@ void init_devices() {
   ret = clEnqueueWriteBuffer(command_queue, dev_vec_b, CL_TRUE, 0, vec_size, mtx_b, 0, NULL, NULL);
 }
 
-void run_kernel(const char *kernel_name) {
+void run_kernel(const char* kernel_name) {
   kernel = clCreateKernel(program, kernel_name, &ret);
   ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &dev_vec_res);
   ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &dev_vec_a);
@@ -96,7 +96,7 @@ void create_program() {
 
   if (ret != CL_SUCCESS) {
     size_t size = 1 << 20; // 1MB
-    char *msg = malloc(size);
+    char* msg = malloc(size);
     size_t msg_size;
 
     clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, msg, &msg_size);
@@ -106,9 +106,9 @@ void create_program() {
   }
 }
 
-int main(int argc, char **argv) {
-  const char *program_name = "mat_mul.cl";
-  const char *kernel_name = "mat_mul";
+int main(int argc, char** argv) {
+  const char* program_name = "mat_mul.cl";
+  const char* kernel_name = "mat_mul";
 
   if (argc > 1) {
     n = atoi(argv[1]);

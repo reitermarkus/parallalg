@@ -10,8 +10,8 @@ typedef struct kernel_code {
   size_t size;
 } kernel_code;
 
-kernel_code load_code(const char *filename) {
-  FILE *fp;
+kernel_code load_code(const char* filename) {
+  FILE* fp;
 
   /* Load the source code containing the kernel*/
   fp = fopen(filename, "rb");
@@ -35,7 +35,9 @@ kernel_code load_code(const char *filename) {
   };
 }
 
-void release_code(kernel_code code) { free((char *)code.code); }
+void release_code(kernel_code code) {
+  free((char*)code.code);
+}
 
 cl_platform_id platform_id;
 cl_device_id device_id;

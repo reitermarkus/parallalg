@@ -8,7 +8,7 @@
   #include <alloca.h>
 #endif
 
-#define MAX_KERNEL_SOURCE 1024*1024*4
+#define MAX_KERNEL_SOURCE 1024 * 1024 * 4
 
 #define QUOTE(str) #str
 #define EXPAND_AND_QUOTE(str) QUOTE(str)
@@ -72,14 +72,14 @@ cl_device_id cluInitDevice(size_t num, cl_context *out_context, cl_command_queue
     num -= ret_num_devices;
   }
 
-    // create opencl context if requested
-  if(out_context != NULL) {
+  // create opencl context if requested
+  if (out_context != NULL) {
     cl_int err;
     *out_context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &err);
     CLU_ERRCHECK(err, "Failed to create ocl context");
 
     // create command queue if requested
-    if(out_queue != NULL) {
+    if (out_queue != NULL) {
       *out_queue = clCreateCommandQueue(*out_context, device_id, 0, &err);
       CLU_ERRCHECK(err, "Failed to create ocl command queue");
     }
@@ -88,9 +88,8 @@ cl_device_id cluInitDevice(size_t num, cl_context *out_context, cl_command_queue
   return device_id;
 }
 
-
 void cluLoadSource(const char* fn, size_t max_len, char* source_buffer) {
-  FILE *fp;
+  FILE* fp;
   fp = fopen(fn, "r");
   assert(fp && "Failed to load kernel file");
   size_t len = fread(source_buffer, 1, max_len, fp);
@@ -113,7 +112,7 @@ cl_program cluBuildProgramFromFile(cl_context context, cl_device_id device_id, c
   // build kernel program
   err = clBuildProgram(program, 1, &device_id, options, NULL, NULL);
 
-  if(err != CL_SUCCESS) {
+  if (err != CL_SUCCESS) {
     fprintf(stderr, "clBuildProgram() failed for source file: %s\n", fn);
     fprintf(stderr, "Error type: %s\n", cluErrorString(err));
     clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, MAX_KERNEL_SOURCE, source_str, NULL);
@@ -127,11 +126,11 @@ cl_program cluBuildProgramFromFile(cl_context context, cl_device_id device_id, c
 void cluSetKernelArguments(const cl_kernel kernel, const cl_uint num_args, ...) {
   //loop through the arguments and call clSetKernelArg for each
   size_t arg_size;
-  const void *arg_val;
+  const void* arg_val;
   va_list arg_list;
   va_start(arg_list, num_args);
 
-  for(cl_uint i=0; i<num_args; ++i) {
+  for (cl_uint i = 0; i < num_args; ++i) {
     arg_size = va_arg(arg_list, size_t);
     arg_val = va_arg(arg_list, void *);
     CLU_ERRCHECK(clSetKernelArg(kernel, i, arg_size, arg_val), "Error setting kernel argument %u", i);
@@ -158,9 +157,9 @@ cl_device_type cluGetDeviceType(cl_device_id device) {
 const char* cluGetDeviceDescription(const cl_device_id device, unsigned id) {
   static char descriptions[MAX_DEVICES][128];
   static cl_bool initialized[MAX_DEVICES];
-  assert(id<MAX_DEVICES && "Device limit exceeded");
+  assert(id < MAX_DEVICES && "Device limit exceeded");
 
-  if(!initialized[id]) {
+  if (!initialized[id]) {
     char name[255], vendor[255];
     cluGetDeviceName(device, 255, name);
     cluGetDeviceVendor(device, 255, vendor);

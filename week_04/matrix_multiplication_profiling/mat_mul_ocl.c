@@ -13,10 +13,10 @@ static cl_mem dev_vec_a;
 static cl_mem dev_vec_b;
 static cl_mem dev_vec_res;
 
-static cl_ulong event_total_time = (cl_ulong) 0;
+static cl_ulong event_total_time = (cl_ulong)0;
 static size_t ev_return_bytes;
 
-void print_profiling_info(const char *event_description) {
+void print_profiling_info(const char* event_description) {
   // wait until event finishes
   ret = clWaitForEvents(1, &profiling_event);
   // get profiling data
@@ -25,10 +25,10 @@ void print_profiling_info(const char *event_description) {
   ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, &ev_return_bytes);
   ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, &ev_return_bytes);
 
-  unsigned long total = (unsigned long) (event_end_time - event_start_time);
+  unsigned long total = (unsigned long)(event_end_time - event_start_time);
   event_total_time += total;
   printf("%s:\n", event_description);
-  printf("  %f ms\n", total*1.0e-6);
+  printf("  %f ms\n", total * 1.0e-6);
 }
 
 void init_platform() {
@@ -65,7 +65,7 @@ void init_devices() {
   print_profiling_info("Write matrix B into device memory");
 }
 
-void run_kernel(const char *kernel_name) {
+void run_kernel(const char* kernel_name) {
   kernel = clCreateKernel(program, kernel_name, &ret);
   CLU_ERRCHECK(ret, "Failed to create mat_mul kernel from program");
 
@@ -117,7 +117,7 @@ void create_program() {
 
   if (ret != CL_SUCCESS) {
     size_t size = 1 << 20; // 1MB
-    char *msg = malloc(size);
+    char* msg = malloc(size);
     size_t msg_size;
 
     clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, msg, &msg_size);
@@ -127,9 +127,9 @@ void create_program() {
   }
 }
 
-int main(int argc, char **argv) {
-  const char *program_name = "mat_mul.cl";
-  const char *kernel_name = "mat_mul";
+int main(int argc, char** argv) {
+  const char* program_name = "mat_mul.cl";
+  const char* kernel_name = "mat_mul";
 
   if (argc > 1) {
     n = atoi(argv[1]);
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
 
   timestamp end = now();
   // -------------------- END -------------------- //
-  printf("\nGPU total time measure: %f ms\n", event_total_time*1.0e-06);
+  printf("\nGPU total time measure: %f ms\n", event_total_time * 1.0e-06);
   printf("CPU total time measure: %.3f ms\n", (end - begin) * 1000);
 
   double mflops = n / 1000000.0 * n * n * 2.0 / (double)(end - begin);
