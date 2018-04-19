@@ -58,6 +58,7 @@ fn temp() -> ocl::Result<()> {
   let kernel = pro_que.kernel_builder("calc_temp")
                       .global_work_offset([0, 0])
                       .global_work_size([n, n])
+                      .local_work_size([10, 10])
                       .arg_named("input", None::<&Buffer<f32>>)
                       .arg_named("output", None::<&Buffer<f32>>)
                       .arg(&n)
