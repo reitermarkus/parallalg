@@ -124,13 +124,18 @@ int main(int argc, char** argv) {
   CLU_ERRCHECK(ret, "Failed to create calc_temp kernel from program");
 
   ret = clSetKernelArg(kernel, 2, sizeof(n), &n);
+  CLU_ERRCHECK(ret, "Failed to set kernel argument with index 2");
   ret = clSetKernelArg(kernel, 3, sizeof(source_x), &source_x);
+  CLU_ERRCHECK(ret, "Failed to set kernel argument with index 3");
   ret = clSetKernelArg(kernel, 4, sizeof(source_y), &source_y);
+  CLU_ERRCHECK(ret, "Failed to set kernel argument with index 4");
 
   // for each time step ..
   for (int t = 0; t < T; t++) {
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &dev_vec_a);
+    CLU_ERRCHECK(ret, "Failed to set kernel argument with index 0");
     ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), &dev_vec_b);
+    CLU_ERRCHECK(ret, "Failed to set kernel argument with index 1");
 
     // execute kernel on device
     CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, dimension,
