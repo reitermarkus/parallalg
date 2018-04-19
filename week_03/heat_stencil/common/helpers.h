@@ -1,6 +1,6 @@
 #pragma once
 
-#include <matrix.h>
+#include "matrix.h"
 
 void print_temperature(Matrix mat, int m, int n) {
   const char* colors = " .-:=+*#%@";

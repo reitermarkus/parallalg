@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <utils.h>
-#include <matrix.h>
+#include "utils.h"
+#include "matrix.h"
 #include "open_cl.h"
 
 static int dimension = 2;

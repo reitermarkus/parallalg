@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <utils.h>
-
-#include <matrix.h>
+#include "utils.h"
+#include "matrix.h"
 #include "common/helpers.h"
 #include "open_cl.h"
 

@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <utils.h>
-#include <matrix.h>
+#include "utils.h"
+#include "matrix.h"
 #include "open_cl.h"
 #include "cl_utils.h"
 

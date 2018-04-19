@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <utils.h>
+#include "utils.h"
 
-#include <matrix.h>
+#include "matrix.h"
 #include "common/helpers.h"
 
 int main(int argc, char** argv) {
