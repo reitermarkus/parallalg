@@ -78,15 +78,6 @@ void clean_up() {
   ret = clReleaseContext(context);
 }
 
-void print(Matrix mtx) {
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      printf("%f ", mtx[i * n + j]);
-    }
-    puts("");
-  }
-}
-
 int main(int argc, char** argv) {
   const char* program_name = "heat_stencil.cl";
 
