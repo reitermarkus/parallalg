@@ -1,5 +1,4 @@
-#ifndef __UTILS_H__
-#define __UTILS_H__
+#pragma once
 
 #include <stdbool.h>
 
@@ -15,5 +14,3 @@ timestamp now() {
   clock_gettime(CLOCK_REALTIME, &spec);
   return spec.tv_sec + spec.tv_nsec / (1e9);
 }
-
-#endif
