@@ -86,8 +86,7 @@ int main(int argc, char** argv) {
 
   context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
 
-  cl_command_queue_properties properties[] = {CL_QUEUE_PROPERTIES, 0};
-  command_queue = clCreateCommandQueueWithProperties(context, device_id, properties, &ret);
+  command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
 
   // ------------ Part B (data management) ------------ //
 

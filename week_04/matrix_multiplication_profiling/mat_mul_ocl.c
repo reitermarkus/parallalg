@@ -96,8 +96,7 @@ int main(int argc, char** argv) {
 
   // ------------ Part A (resource management) ------------ //
   device_id = cluInitDevice(0, &context, &command_queue);
-  cl_command_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
-  command_queue = clCreateCommandQueueWithProperties(context, device_id, properties , &ret);
+  command_queue = clCreateCommandQueueWithProperties(context, device_id, CL_QUEUE_PROFILING_ENABLE , &ret);
 
   // ------------ Part B (data management) ------------ //
 
