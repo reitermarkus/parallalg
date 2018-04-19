@@ -7,7 +7,7 @@
 #include "open_cl.h"
 
 static const int dimension = 2;
-static int n = 500;
+static unsigned long n = 500;
 
 static size_t vec_size;
 static Matrix matrix_a;
@@ -28,8 +28,7 @@ void init_platform() {
   ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
   ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
   context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
-  cl_command_queue_properties properties[] = {CL_QUEUE_PROPERTIES, 0};
-  command_queue = clCreateCommandQueueWithProperties(context, device_id, properties, &ret);
+  command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
 }
 
 void init_devices() {
@@ -98,8 +97,8 @@ int main(int argc, char** argv) {
   }
 
   // and there is a heat source in one corner
-  size_t source_x = n / 4;
-  size_t source_y = n / 4;
+  unsigned long source_x = n / 4;
+  unsigned long source_y = n / 4;
   matrix_a[source_x * n + source_y] = 273.0f + 60.0f;
 
   printf("Initial:\n");
