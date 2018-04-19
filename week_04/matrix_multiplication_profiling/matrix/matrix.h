@@ -1,6 +1,8 @@
 #ifndef __MATRIX_H__
 #define __MATRIX_H__
 
+#include <stdlib.h>
+
 typedef float value_t;
 
 typedef value_t* Matrix;

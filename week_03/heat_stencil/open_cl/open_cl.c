@@ -1,5 +1,6 @@
-#include "../common/headers.h"
 #include "open_cl.h"
+
+#include <stdio.h>
 
 kernel_code load_code(const char *filename) {
   size_t MAX_SOURCE_SIZE = 0x100000;

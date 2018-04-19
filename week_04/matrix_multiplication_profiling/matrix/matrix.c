@@ -1,5 +1,6 @@
-#include "../common/headers.h"
 #include "matrix.h"
+
+#include <stdio.h>
 
 Matrix create_matrix(size_t n, size_t m) {
   // create data and index vector

@@ -1,4 +1,3 @@
-#include "../common/headers.h"
 #include "matrix.h"
 
 int n = 1000;

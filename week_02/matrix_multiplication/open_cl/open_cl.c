@@ -1,4 +1,5 @@
-#include "../common/headers.h"
+#include <stdio.h>
+
 #include "open_cl.h"
 
 kernel_code load_code(const char *filename) {

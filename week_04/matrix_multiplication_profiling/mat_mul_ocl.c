@@ -1,4 +1,4 @@
-#include "common/headers.h"
+#include <stdio.h>
 #include <utils.h>
 #include "matrix/matrix.h"
 #include "matrix/helpers.h"
@@ -24,7 +24,7 @@ void print_profiling_info(const char *event_description) {
   cl_ulong event_end_time = (cl_ulong) 0;
   ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, &ev_return_bytes);
   ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, &ev_return_bytes);
-  
+
   unsigned long total = (unsigned long) (event_end_time - event_start_time);
   event_total_time += total;
   printf("%s:\n", event_description);
