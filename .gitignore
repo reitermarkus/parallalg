@@ -60,3 +60,5 @@ dkms.conf
 *_ocl
 *_omp
 *_seq
+
+*.exe.stackdump
