@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <utils.h>
 #include <matrix.h>
-#include "matrix/helpers.h"
 #include "open_cl.h"
 #include "open_cl/cl_utils.h"
 
@@ -29,68 +28,6 @@ void print_profiling_info(const char* event_description) {
   event_total_time += total;
   printf("%s:\n", event_description);
   printf("  %f ms\n", total * 1.0e-6);
-}
-
-void init_platform() {
-  // initialize OpenCL local state variables
-  platform_id = NULL;
-  device_id = NULL;
-  command_queue = NULL;
-  program = NULL;
-  kernel = NULL;
-  context = NULL;
-
-  // ------------ Part A (resource management) ------------ //
-  device_id = cluInitDevice(0, &context, &command_queue);
-  cl_command_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
-  command_queue = clCreateCommandQueueWithProperties(context, device_id, properties , &ret);
-}
-
-void init_devices() {
-  // ------------ Part B (data management) ------------ //
-
-  vec_size = sizeof(value_t) * n * n;
-  dev_vec_a   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
-  CLU_ERRCHECK(ret, "Failed to create buffer for matrix A");
-  dev_vec_b   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
-  CLU_ERRCHECK(ret, "Failed to create buffer for matrix B");
-  dev_vec_res = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, vec_size, NULL, &ret);
-  CLU_ERRCHECK(ret, "Failed to create buffer for matrix C");
-
-  ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, mtx_a, 0, NULL, &profiling_event);
-  CLU_ERRCHECK(ret, "Failed to write matrix A to device");
-  print_profiling_info("Write matrix A into device memory");
-  ret = clEnqueueWriteBuffer(command_queue, dev_vec_b, CL_TRUE, 0, vec_size, mtx_b, 0, NULL, &profiling_event);
-  CLU_ERRCHECK(ret, "Failed to write matrix B to device");
-  print_profiling_info("Write matrix B into device memory");
-}
-
-void run_kernel(const char* kernel_name) {
-  kernel = clCreateKernel(program, kernel_name, &ret);
-  CLU_ERRCHECK(ret, "Failed to create mat_mul kernel from program");
-
-  cluSetKernelArguments(kernel, 4,
-    sizeof(cl_mem), (void *)&dev_vec_res,
-    sizeof(cl_mem), (void *)&dev_vec_a,
-    sizeof(cl_mem), (void *)&dev_vec_b,
-    sizeof(n), &n
-  );
-
-  // 11) schedule kernel
-  size_t global_work_offset[2] = {0, 0};
-  size_t global_work_size[2] = {n, n};
-
-  // execute kernel on device
-  CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, dimension,
-    global_work_offset, global_work_size, NULL, 0, NULL, &profiling_event), "Failed to enqueue 2D kernel");
-
-  print_profiling_info("Run kernel");
-
-  // 12) transfere data back to host
-  CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, dev_vec_res,
-    CL_TRUE, 0, vec_size, mtx_res, 0, NULL, &profiling_event), "Failed reading back result");
-
-  print_profiling_info("Read result matrix from device to host");
 }
 
 void clean_up() {
@@ -131,6 +68,7 @@ int main(int argc, char** argv) {
   const char* program_name = "mat_mul.cl";
   const char* kernel_name = "mat_mul";
 
+  int n = 1000;
   if (argc > 1) {
     n = atoi(argv[1]);
   }
@@ -138,15 +76,74 @@ int main(int argc, char** argv) {
   printf("Matrix Multiplication with n=%d\n", n);
 
   // -------------------- SETUP -------------------- //
-  init_matrices();
+  Matrix mtx_a = create_matrix(n, n);
+  Matrix mtx_b = create_matrix(n, n);
+
+  fill_matrices(mtx_a, mtx_b, n, n);
+
+  Matrix mtx_res = create_matrix(n, n);
 
   // -------------------- START -------------------- //
   timestamp begin = now();
 
-  init_platform();
-  init_devices();
+  // initialize OpenCL local state variables
+  platform_id = NULL;
+  device_id = NULL;
+  command_queue = NULL;
+  program = NULL;
+  kernel = NULL;
+  context = NULL;
+
+  // ------------ Part A (resource management) ------------ //
+  device_id = cluInitDevice(0, &context, &command_queue);
+  cl_command_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+  command_queue = clCreateCommandQueueWithProperties(context, device_id, properties , &ret);
+
+  // ------------ Part B (data management) ------------ //
+
+  vec_size = sizeof(value_t) * n * n;
+  dev_vec_a   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for matrix A");
+  dev_vec_b   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for matrix B");
+  dev_vec_res = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, vec_size, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for matrix C");
+
+  ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, mtx_a, 0, NULL, &profiling_event);
+  CLU_ERRCHECK(ret, "Failed to write matrix A to device");
+  print_profiling_info("Write matrix A into device memory");
+  ret = clEnqueueWriteBuffer(command_queue, dev_vec_b, CL_TRUE, 0, vec_size, mtx_b, 0, NULL, &profiling_event);
+  CLU_ERRCHECK(ret, "Failed to write matrix B to device");
+  print_profiling_info("Write matrix B into device memory");
+
   create_program();
-  run_kernel(kernel_name);
+
+  kernel = clCreateKernel(program, kernel_name, &ret);
+  CLU_ERRCHECK(ret, "Failed to create mat_mul kernel from program");
+
+  cluSetKernelArguments(kernel, 4,
+    sizeof(cl_mem), (void *)&dev_vec_res,
+    sizeof(cl_mem), (void *)&dev_vec_a,
+    sizeof(cl_mem), (void *)&dev_vec_b,
+    sizeof(n), &n
+  );
+
+  // 11) schedule kernel
+  size_t global_work_offset[2] = {0, 0};
+  size_t global_work_size[2] = {n, n};
+
+  // execute kernel on device
+  CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, dimension,
+    global_work_offset, global_work_size, NULL, 0, NULL, &profiling_event), "Failed to enqueue 2D kernel");
+
+  print_profiling_info("Run kernel");
+
+  // 12) transfere data back to host
+  CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, dev_vec_res,
+    CL_TRUE, 0, vec_size, mtx_res, 0, NULL, &profiling_event), "Failed reading back result");
+
+  print_profiling_info("Read result matrix from device to host");
+
   clean_up();
 
   timestamp end = now();
@@ -158,7 +155,7 @@ int main(int argc, char** argv) {
   printf("MFLOPS: %.3f\n", mflops);
 
   // ------------------- CHECK ------------------- //
-  bool success = check();
+  bool success = check(mtx_res, n, n);
   printf("\nVerification: %s\n", (success) ? "OK" : "FAILED");
 
   // ----------------- CLEAN UP ------------------ //

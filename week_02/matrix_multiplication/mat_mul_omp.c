@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <utils.h>
-#include "matrix/helpers.h"
 #include <matrix.h>
 
 
 int main(int argc, char** argv) {
+  int n = 1000;
   if (argc > 1) {
     n = atoi(argv[1]);
   }
@@ -12,7 +12,12 @@ int main(int argc, char** argv) {
   printf("Matrix Multiplication with n=%d\n", n);
 
   // -------------------- SETUP -------------------- //
-  init_matrices();
+  Matrix mtx_a = create_matrix(n, n);
+  Matrix mtx_b = create_matrix(n, n);
+
+  fill_matrices(mtx_a, mtx_b, n, n);
+
+  Matrix mtx_res = create_matrix(n, n);
 
   // -------------------- START -------------------- //
   timestamp begin = now();
@@ -34,7 +39,7 @@ int main(int argc, char** argv) {
   printf("Total time: %.3fms\n", (end - begin) * 1000);
 
   // ------------------- CHECK ------------------- //
-  bool success = check();
+  bool success = check(mtx_res, n, n);
   printf("Verification: %s\n", (success) ? "OK" : "FAILED");
 
   // ----------------- CLEAN UP ------------------ //
