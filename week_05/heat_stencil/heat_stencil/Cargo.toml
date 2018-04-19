@@ -1,0 +1,20 @@
+[package]
+name = "heat_stencil"
+version = "0.1.0"
+authors = ["Markus Reiter <me@reitermark.us>"]
+
+[dependencies]
+rayon = "0.9"
+ocl = "0.18"
+
+[[bin]]
+name = "heat_stencil_seq"
+path = "src/main_seq.rs"
+
+[[bin]]
+name = "heat_stencil_par"
+path = "src/main_par.rs"
+
+[[bin]]
+name = "heat_stencil_ocl"
+path = "src/main_ocl.rs"
