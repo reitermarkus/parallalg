@@ -47,6 +47,7 @@ void init_devices() {
 void create_program(const char* program_name) {
   kernel_code code = load_code(program_name);
   program = clCreateProgramWithSource(context, 1, &code.code, (const size_t *)&code.size, &ret);
+  CLU_ERRCHECK(ret, "Failed to create program from source file: %s", program_name);
 
   ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
 
