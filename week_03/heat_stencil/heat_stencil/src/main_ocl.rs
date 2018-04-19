@@ -11,7 +11,7 @@ mod benchmark;
 
 fn temp() -> ocl::Result<()> {
   let kernel_source = r#"
-    __kernel void calc_temp(__global float const* matrix_a, __global float* matrix_b, size_t n, size_t source_x, size_t source_y) {
+    __kernel void calc_temp(__global float const* matrix_a, __global float* matrix_b, ulong n, ulong source_x, ulong source_y) {
       size_t i = get_global_id(0);
       size_t j = get_global_id(1);
 
