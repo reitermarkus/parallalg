@@ -7,7 +7,7 @@ typedef float value_t;
 typedef value_t* Matrix;
 
 Matrix create_matrix(size_t m, size_t n) {
-  return calloc(sizeof(value_t), m * n);
+  return calloc(m * n, sizeof(value_t));
 }
 
 void fill_matrices(Matrix a, Matrix b, size_t m, size_t n) {
