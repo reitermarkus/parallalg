@@ -162,6 +162,9 @@ int main(int argc, char** argv) {
   timestamp end = now();
   printf("Total time: %.3fms\n", (end - begin) * 1000);
 
+  double mflops = n * n * 7 * T / 1000000.0 / (double)(end - begin);
+  printf("MFLOPS: %.3f\n", mflops);
+
   // ---------- check ----------
 
   bool success = true;
