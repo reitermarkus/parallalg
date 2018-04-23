@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 
   timestamp begin = now();
 
-  device_id = cluInitDevice(1, &context, &command_queue);
+  device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
 
   // ------------ Part B (data management) ------------ //
   vec_size = sizeof(value_t) * n * n;

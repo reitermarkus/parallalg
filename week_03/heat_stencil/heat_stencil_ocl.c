@@ -5,6 +5,7 @@
 #include "matrix.h"
 #include "common/helpers.h"
 #include "open_cl.h"
+#include "cl_utils.h"
 
 static const int dimension = 2;
 static unsigned long n = 500;
@@ -25,10 +26,7 @@ void init_platform() {
   context = NULL;
 
   // ------------ Part A (resource management) ------------ //
-  ret = clGetPlatformIDs(1, &platform_id, NULL);
-  ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
-  context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
-  command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
+  device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
 }
 
 void init_devices() {

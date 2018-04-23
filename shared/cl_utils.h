@@ -21,6 +21,10 @@ if(__err != CL_SUCCESS) { \
 	exit(-1); \
 }
 
+#ifndef DEVICE_NUMBER
+#define DEVICE_NUMBER 0
+#endif
+
 // ------------------------------------------------------------------------------------------------ declarations
 
 // initialize opencl device "num" -- devices are numbered sequentially across all platforms

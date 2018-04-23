@@ -10,6 +10,11 @@ ifneq ($(OS), Windows_NT)
     else
       $(error "GCC is not installed, run `brew install gcc`")
     endif
+
+    # Use dedicated GPU on MacBookPro.
+    ifneq (, $(findstring MacBookPro, $(shell /usr/sbin/ioreg -c IOPlatformExpertDevice -r -d 1)))
+      OPENCL_FLAGS += -DDEVICE_NUMBER=1
+    endif
 	else
     OCL_HOME = /scratch/c703/c7031057/opencl
     CC_FLAGS += -I$(OCL_HOME)/include -L$(OCL_HOME)/lib
