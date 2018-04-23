@@ -15,9 +15,6 @@ macro_rules! benchmark {
     println!("│ Total              │ {:#6 } ms │", into_ms(elapsed));
     println!("└────────────────────┴───────────┘");
 
-
-    println!("{:?}", e);
-
     e
   }};
 }

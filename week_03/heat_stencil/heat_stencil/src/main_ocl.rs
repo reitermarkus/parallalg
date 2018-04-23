@@ -36,9 +36,12 @@ fn temp() -> ocl::Result<()> {
 
   let n = 500;
 
+  let device_list = Device::list(Platform::default(), Some(DeviceType::GPU))?;
+  let device = device_list.last().expect("No GPU found.");
+
   let pro_que = ProQue::builder().src(kernel_source)
                                  .dims(n * n)
-                                 .device(Device::list(Platform::list().first().unwrap(), Some(DeviceType::DEFAULT)).unwrap().first().unwrap())
+                                 .device(device)
                                  .build()?;
 
   let mut matrix_a = vec![273.0; n * n];

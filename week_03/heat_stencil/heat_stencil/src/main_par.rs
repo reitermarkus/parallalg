@@ -7,11 +7,11 @@ use rayon::prelude::*;
 mod print_temperature;
 use print_temperature::print_temperature;
 
+#[macro_use]
 mod benchmark;
-use benchmark::benchmark;
 
 fn main() {
-  benchmark(|| {
+  benchmark! {
     let n = 500;
 
     let mut matrix_a = vec![273.0; n * n];
@@ -68,5 +68,5 @@ fn main() {
         print_temperature(&matrix_a_arc.clone(), n, n);
       }
     }
-  });
+  };
 }
