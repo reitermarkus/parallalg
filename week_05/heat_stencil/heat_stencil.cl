@@ -10,19 +10,19 @@ kernel void calc_temp(global float const* matrix_a, global float* matrix_b, loca
 
   size_t bs = w + 2;
 
-  #define G(X,Y) matrix_a[   (X) * n +   (Y)  ]
-  #define L(X,Y) t[((X)+1)*bs + ((Y)+1)]
+  #define G(X, Y) matrix_a[(X) * n + (Y)]
+  #define L(X, Y) t[((X) + 1) * bs + ((Y) + 1)]
 
   if (i < n && j < n) {
     // Get center.
-    L(li,lj) = G(i,j);
+    L(li, lj) = G(i, j);
 
     // Get current temperatures left/right.
-    if (li ==    0  ) L(li - 1, lj) = G(i - 1, j);
+    if (li == 0) L(li - 1, lj) = G(i - 1, j);
     if (li == w - 1) L(li + 1, lj) = G(i + 1, j);
 
     // Get current temperatures up/down.
-    if (lj ==    0  ) L(li, lj - 1) = G(i, j - 1);
+    if (lj == 0) L(li, lj - 1) = G(i, j - 1);
     if (lj == h - 1) L(li, lj + 1) = G(i, j + 1);
   }
 
