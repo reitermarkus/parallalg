@@ -119,8 +119,11 @@ int main(int argc, char** argv) {
 
   // 11) schedule kernel
   size_t global_work_offset[] = {0, 0};
-  size_t global_work_size[] = {n, n};
-  size_t local_work_size[] = {10, 10};
+  size_t local_work_size[] = {16, 16};
+  size_t global_work_size[] = {
+    extend_to_multiple(n, local_work_size[0]),
+    extend_to_multiple(n, local_work_size[1]),
+  };
 
   kernel = clCreateKernel(program, "calc_temp", &ret);
   CLU_ERRCHECK(ret, "Failed to create calc_temp kernel from program");
