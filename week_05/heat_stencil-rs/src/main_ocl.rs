@@ -1,5 +1,7 @@
 extern crate ocl;
 use ocl::{Buffer, ProQue, Device, DeviceType, Platform};
+use ocl::enums::DeviceInfo;
+use ocl::enums::DeviceInfoResult::MaxWorkGroupSize;
 
 use std::mem;
 
@@ -94,7 +96,13 @@ fn temp() -> ocl::Result<()> {
 
   let time_steps = n * 100;
 
-  let local_work_size = [16, 16];
+  let local_work_size = {
+    if let Ok(MaxWorkGroupSize(size)) = device.info(DeviceInfo::MaxWorkGroupSize) {
+      [(size as f64).sqrt() as usize, (size as f64).sqrt() as usize]
+    } else {
+      [1, 1]
+    }
+  };
 
   let kernel = pro_que.kernel_builder("calc_temp")
                       .global_work_offset([0, 0])
