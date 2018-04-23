@@ -8,8 +8,6 @@
   #include <alloca.h>
 #endif
 
-#define MAX_KERNEL_SOURCE 1024 * 1024 * 4
-
 #define QUOTE(str) #str
 #define EXPAND_AND_QUOTE(str) QUOTE(str)
 
@@ -34,7 +32,7 @@ const char* cluGetDeviceDescription(const cl_device_id device, unsigned id);
 
 // loads and builds program from "fn" on the supplied context and device, with the options string "options"
 // aborts and reports the build log in case of compiler errors
-cl_program cluBuildProgramFromFile(cl_context context, cl_device_id device_id, const char* fn, const char* options);
+cl_program cluBuildProgramFromFile(cl_context context, cl_device_id device_id, const char* filename, const char* options);
 
 // sets "num_arg" arguments for kernel "kernel"
 // additional arguments need to follow this order: arg0_size, arg0, arg1_size, arg1, ...
@@ -88,37 +86,43 @@ cl_device_id cluInitDevice(size_t num, cl_context *out_context, cl_command_queue
   return device_id;
 }
 
-void cluLoadSource(const char* fn, size_t max_len, char* source_buffer) {
+cl_program cluBuildProgramFromFile(cl_context context, cl_device_id device_id, const char* filename, const char* options) {
   FILE* fp;
-  fp = fopen(fn, "r");
-  assert(fp && "Failed to load kernel file");
-  size_t len = fread(source_buffer, 1, max_len, fp);
-  source_buffer[len] = '\0';
-  assert(feof(fp) && "Kernel source buffer too small");
+
+  // Load the source code containing the kernel.
+  fp = fopen(filename, "rb");
+  if (!fp) {
+    fprintf(stderr, "Failed to load kernel from file %s\n", filename);
+    exit(EXIT_FAILURE);
+  }
+
+  fseek(fp, 0, SEEK_END);
+  size_t size = ftell(fp);
+  rewind(fp);
+
+  char* source = (char*)calloc(size + 1, sizeof(char));
+  fread(source, sizeof(char), size, fp);
+
   fclose(fp);
-}
 
-
-cl_program cluBuildProgramFromFile(cl_context context, cl_device_id device_id, const char* fn, const char* options) {
   cl_int err;
 
-  // create kernel programs from source
-  char *source_str = (char*)alloca(MAX_KERNEL_SOURCE * sizeof(char));
-  cluLoadSource(fn, MAX_KERNEL_SOURCE, source_str);
-  const char *sources[1] = { source_str };
-  cl_program program = clCreateProgramWithSource(context, 1, sources, NULL, &err);
-  CLU_ERRCHECK(err, "Failed to create program from source file: %s", fn);
+  // Create kernel program from source.
+  cl_program program = clCreateProgramWithSource(context, 1, (const char**)&source, NULL, &err);
+  CLU_ERRCHECK(err, "Failed to create program from source file: %s", filename);
 
-  // build kernel program
+  // Build kernel program.
   err = clBuildProgram(program, 1, &device_id, options, NULL, NULL);
 
   if (err != CL_SUCCESS) {
-    fprintf(stderr, "clBuildProgram() failed for source file: %s\n", fn);
+    fprintf(stderr, "clBuildProgram() failed for source file: %s\n", filename);
     fprintf(stderr, "Error type: %s\n", cluErrorString(err));
-    clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, MAX_KERNEL_SOURCE, source_str, NULL);
-    fprintf(stderr, "Build log:\n%s\n", source_str);
-    exit(-1);
+    clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, source, NULL);
+    fprintf(stderr, "Build log:\n%s\n", source);
+    exit(EXIT_FAILURE);
   }
+
+  free(source);
 
   return program;
 }

@@ -16,53 +16,6 @@ static Matrix matrix_a;
 static cl_mem dev_vec_a;
 static cl_mem dev_vec_b;
 
-void init_platform() {
-  // initialize OpenCL local state variables
-  platform_id = NULL;
-  device_id = NULL;
-  command_queue = NULL;
-  program = NULL;
-  kernel = NULL;
-  context = NULL;
-
-  // ------------ Part A (resource management) ------------ //
-  ret = clGetPlatformIDs(1, &platform_id, &ret_num_platforms);
-  ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
-  context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
-  command_queue = clCreateCommandQueueWithProperties(context, device_id, 0, &ret);
-}
-
-void init_devices() {
-  // ------------ Part B (data management) ------------ //
-  vec_size = sizeof(value_t) * n * n;
-  dev_vec_a = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
-  CLU_ERRCHECK(ret, "Failed to create buffer for vector A");
-  dev_vec_b = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
-  CLU_ERRCHECK(ret, "Failed to create buffer for vector B");
-
-  ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, matrix_a, 0, NULL, NULL);
-  CLU_ERRCHECK(ret, "Failed to write vector A to device");
-}
-
-void create_program(const char* program_name) {
-  kernel_code code = load_code(program_name);
-  program = clCreateProgramWithSource(context, 1, &code.code, (const size_t *)&code.size, &ret);
-  CLU_ERRCHECK(ret, "Failed to create program from source file: %s", program_name);
-
-  ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
-
-  if (ret != CL_SUCCESS) {
-    size_t size = 1 << 20; // 1MB
-    char* msg = malloc(size);
-    size_t msg_size;
-
-    clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, msg, &msg_size);
-
-    printf("Build Error:\n%s", msg);
-    exit(1);
-  }
-}
-
 void clean_up() {
   // ------------ Part D (cleanup) ------------ //
 
@@ -113,9 +66,19 @@ int main(int argc, char** argv) {
 
   timestamp begin = now();
 
-  init_platform();
-  init_devices();
-  create_program(program_name);
+  device_id = cluInitDevice(1, &context, &command_queue);
+
+  // ------------ Part B (data management) ------------ //
+  vec_size = sizeof(value_t) * n * n;
+  dev_vec_a = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for vector A");
+  dev_vec_b = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for vector B");
+
+  ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, matrix_a, 0, NULL, NULL);
+  CLU_ERRCHECK(ret, "Failed to write vector A to device");
+
+  program = cluBuildProgramFromFile(context, device_id, program_name, NULL);
 
   // 11) schedule kernel
   size_t global_work_offset[] = {0, 0};

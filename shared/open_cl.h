@@ -46,6 +46,5 @@ cl_program program;
 cl_kernel kernel;
 cl_context context;
 cl_uint ret_num_devices;
-cl_uint ret_num_platforms;
 cl_int ret;
 cl_event profiling_event;
