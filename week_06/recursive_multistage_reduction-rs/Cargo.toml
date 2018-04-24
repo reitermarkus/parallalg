@@ -1,0 +1,21 @@
+[package]
+name = "recursive_multistage_reduction"
+version = "0.1.0"
+authors = ["Markus Reiter <me@reitermark.us>"]
+
+[dependencies]
+rand = "0.5.0-pre.1"
+rayon = "0.9"
+ocl = "0.18"
+
+[[bin]]
+name = "main_seq"
+path = "src/main_seq.rs"
+
+[[bin]]
+name = "main_par"
+path = "src/main_par.rs"
+
+[[bin]]
+name = "main_ocl"
+path = "src/main_ocl.rs"
