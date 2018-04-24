@@ -91,7 +91,5 @@ fn temp() -> ocl::Result<()> {
 }
 
 fn main() {
-  if let Err(error) = temp() {
-    panic!("{:?}", error);
-  }
+  temp().unwrap()
 }
