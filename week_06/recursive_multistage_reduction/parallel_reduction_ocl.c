@@ -52,7 +52,7 @@ void clean_up() {
 }
 
 int main(int argc, char **argv) {
-  srand(time(NULL));
+  srand(0);
 
   const char *program_name = "../kernel.cl";
 
@@ -63,7 +63,6 @@ int main(int argc, char **argv) {
 
   // init
   long *array = malloc(sizeof(long) * n);
-  long *result_array = malloc(sizeof(long) * n);
 
   for (long i = 0; i < n; i++) {
     array[i] = (rand() % 2);
@@ -91,30 +90,41 @@ int main(int argc, char **argv) {
   program = cluBuildProgramFromFile(context, device_id, program_name, NULL);
 
   // 11) schedule kernel
-  size_t global_work_offset[] = {0};
-  size_t local_work_size[] = {256};
-  size_t global_work_size = extend_to_multiple(n, local_work_size[0]);
+  size_t global_work_offset = 0;
+  size_t local_work_size = 256;
+  size_t global_work_size = extend_to_multiple(n, local_work_size);
 
   kernel = clCreateKernel(program, "reduce", &ret);
   CLU_ERRCHECK(ret, "Failed to create reduce kernel from program");
 
   cluSetKernelArguments(kernel, 4,
     sizeof(cl_mem), (void *)&bytes,
-    (local_work_size[0] + 2) * sizeof(long), NULL,
+    local_work_size * sizeof(long), NULL,
     sizeof(n), &n,
     sizeof(cl_mem), (void *)&result
   );
 
 
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
-    global_work_offset, &global_work_size, local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
+    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
 
-    print_profiling_info("Run kernel");
+  print_profiling_info("Run kernel");
+
+  size_t result_array_size = global_work_size / local_work_size;
+  long *result_array = malloc(sizeof(long) * result_array_size);
 
   CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, result,
     CL_TRUE, 0, vec_size, result_array, 0, NULL, &profiling_event), "Failed reading back result");
 
   print_profiling_info("Read result matrix from device to host");
+
+  long result = 0;
+
+  for(size_t i = 0; i < result_array_size; i++) {
+    result += result_array[i];
+  }
+
+  printf("Result: %d\n", result);
 
   timestamp end = now();
   printf("Total time: %.3fms\n", (end - begin) * 1000);

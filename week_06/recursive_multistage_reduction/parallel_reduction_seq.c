@@ -3,7 +3,7 @@
 #include <time.h>
 
 int main(int argc, char **argv) {
-  srand(time(NULL));
+  srand(0);
 
   long n = 1000000;
   long count = 0;
