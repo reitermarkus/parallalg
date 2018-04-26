@@ -33,13 +33,4 @@ kernel void reduce(global const ulong* bytes, local ulong* accumulator, const ul
   if (local_id == 0) {
     result[group_id] = accumulator[0];
   }
-
-  barrier(CLK_GLOBAL_MEM_FENCE);
-
-  // Reduce all local results.
-  if (global_id == 0) {
-    for (size_t g = 1; g < num_groups; g++)  {
-      result[0] += result[g];
-    }
-  }
 }

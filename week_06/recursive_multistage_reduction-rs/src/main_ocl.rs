@@ -54,6 +54,10 @@ fn reduce() -> ocl::Result<()> {
     }
   };
 
+  let global_work_size = multiple!(n, local_work_size);
+
+  let groups = global_work_size / local_work_size;
+
   let ones: u64 = benchmark! {
     bytes.par_iter().sum()
   };
@@ -62,7 +66,7 @@ fn reduce() -> ocl::Result<()> {
   let kernel = pro_que.kernel_builder("reduce")
                       .global_work_offset([0])
                       .local_work_size([local_work_size])
-                      .global_work_size([multiple!(n, local_work_size)])
+                      .global_work_size([global_work_size])
                       .arg_named("bytes", Some(&bytes_buffer))
                       .arg_local::<usize>(local_work_size)
                       .arg_named("length", &n)
@@ -70,14 +74,15 @@ fn reduce() -> ocl::Result<()> {
                       .build()?;
 
 
-  let mut result = vec![0];
 
-  benchmark! {
+  let ones: u64 = benchmark! {
+    let mut result = vec![0; groups];
     unsafe { kernel.enq()?; }
     result_buffer.read(&mut result).enq()?;
-  }
+    result.iter().sum()
+  };
 
-  println!("{:?}", result[0]);
+  println!("{}", ones);
 
   Ok(())
 }
