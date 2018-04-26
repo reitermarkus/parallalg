@@ -1,4 +1,3 @@
-use std::mem;
 use std::fs::File;
 use std::io::{Read, BufReader};
 
@@ -7,10 +6,10 @@ use ocl::{ProQue, Device, DeviceType, Platform};
 use ocl::enums::DeviceInfo;
 use ocl::enums::DeviceInfoResult::MaxWorkGroupSize;
 
+extern crate rand;
+
 extern crate rayon;
 use rayon::prelude::*;
-
-extern crate rand;
 
 mod random_bytes;
 use random_bytes::random_bytes;
@@ -26,7 +25,7 @@ macro_rules! multiple {
 }
 
 fn reduce() -> ocl::Result<()> {
-  let n = 16;
+  let n = 4_000;
   let seed = [0; 32];
 
   let bytes = random_bytes(n, seed);
@@ -44,8 +43,8 @@ fn reduce() -> ocl::Result<()> {
                                  .device(device)
                                  .build()?;
 
-  let mut bytes_buffer = pro_que.buffer_builder().copy_host_slice(&bytes).build()?;
-  let mut result_buffer = pro_que.create_buffer::<u64>()?;
+  let bytes_buffer = pro_que.buffer_builder().copy_host_slice(&bytes).build()?;
+  let result_buffer = pro_que.create_buffer::<u64>()?;
 
   let local_work_size = {
     if let Ok(MaxWorkGroupSize(size)) = device.info(DeviceInfo::MaxWorkGroupSize) {
@@ -55,26 +54,30 @@ fn reduce() -> ocl::Result<()> {
     }
   };
 
+  let ones: u64 = benchmark! {
+    bytes.par_iter().sum()
+  };
+  println!("{}", ones);
+
   let kernel = pro_que.kernel_builder("reduce")
                       .global_work_offset([0])
                       .local_work_size([local_work_size])
-                      .global_work_size([multiple!(n / 2, local_work_size)])
+                      .global_work_size([multiple!(n, local_work_size)])
                       .arg_named("bytes", Some(&bytes_buffer))
-                      .arg_local::<usize>(n / 2)
+                      .arg_local::<usize>(n)
                       .arg_named("length", &n)
                       .arg_named("result", Some(&result_buffer))
                       .build()?;
 
-  unsafe { kernel.enq()?; }
 
-  let mut result = vec![0; n / 2];
-  result_buffer.read(&mut result).enq()?;
+  let mut result = vec![0];
 
-  let ones: u64 = bytes.par_iter().sum();
-  println!("{}", ones);
+  benchmark! {
+    unsafe { kernel.enq()?; }
+    result_buffer.read(&mut result).enq()?;
+  }
 
-  println!("{:?}", bytes);
-  println!("{:?}", result);
+  println!("{:?}", result[0]);
 
   Ok(())
 }

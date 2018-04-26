@@ -6,15 +6,40 @@ kernel void reduce(global const ulong* bytes, local ulong* accumulator, const ul
   size_t global_size = get_global_size(0);
 
   size_t group_id = get_group_id(0);
+  size_t num_groups = get_num_groups(0);
 
-  size_t start_id = (group_id * local_size + local_id) * 2;
+  if (global_id < length) {
+    accumulator[local_id] = bytes[global_id];
+  } else {
+    accumulator[local_id] = 0;
+  }
 
-  if (start_id < length) {
-    ulong byte1 = bytes[start_id];
-    ulong byte2 = start_id + 1 < length ? bytes[start_id + 1] : 0;
+  barrier(CLK_LOCAL_MEM_FENCE);
 
-    // printf("r[%d] = b[%d] + b[%d] = %d + %d\n", group_id * local_size + local_id, start_id, start_id + 1, byte1, byte2);
+  for (size_t offset = local_size / 2; offset > 0; offset /= 2) {
+    if (local_id < offset) {
+      ulong byte1 = accumulator[local_id];
+      ulong byte2 = accumulator[local_id + offset];
 
-    result[group_id * local_size + local_id] = byte1 + byte2;
+      // printf("a[%d] = a[%d] + a[%d] = %d + %d\n", local_id, local_id, local_id + offset, byte1, byte2);
+
+      accumulator[local_id] = byte1 + byte2;
+    }
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+  }
+
+  // Read local results.
+  if (local_id == 0) {
+    result[group_id] = accumulator[0];
+  }
+
+  barrier(CLK_GLOBAL_MEM_FENCE);
+
+  // Reduce all local results.
+  if (global_id == 0) {
+    for (size_t g = 1; g < num_groups; g++)  {
+      result[0] += result[g];
+    }
   }
 }
