@@ -4,7 +4,6 @@
 #include <time.h>
 
 #include "cl_utils.h"
-#include "common/helpers.h"
 #include "matrix.h"
 #include "open_cl.h"
 #include "utils.h"
