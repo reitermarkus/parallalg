@@ -15,42 +15,6 @@ static size_t vec_size;
 static cl_mem bytes;
 static cl_mem result;
 
-void print_profiling_info(const char* event_description) {
-  cl_ulong event_total_time = (cl_ulong)0;
-  size_t ev_return_bytes;
-
-  // wait until event finishes
-  ret = clWaitForEvents(1, &profiling_event);
-  // get profiling data
-  cl_ulong event_start_time = (cl_ulong) 0;
-  cl_ulong event_end_time = (cl_ulong) 0;
-  ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, &ev_return_bytes);
-  ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, &ev_return_bytes);
-
-  unsigned long total = (unsigned long)(event_end_time - event_start_time);
-  event_total_time += total;
-  printf("%s:\n", event_description);
-  printf("  %f ms\n", total * 1.0e-6);
-}
-
-void clean_up() {
-  // ------------ Part D (cleanup) ------------ //
-
-  // wait for completed operations (there should be none)
-  CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue");
-  CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completion");
-  CLU_ERRCHECK(clReleaseKernel(kernel), "Failed to release kernel");
-  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
-
-  // free device memory
-  CLU_ERRCHECK(clReleaseMemObject(bytes), "Failed to release Matrix A");
-  CLU_ERRCHECK(clReleaseMemObject(result), "Failed to release Matrix B");
-
-  // free management resources
-  CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
-  CLU_ERRCHECK(clReleaseContext(context), "Failed to release OpenCL context");
-}
-
 int main(int argc, char **argv) {
   srand(0);
 
@@ -82,9 +46,8 @@ int main(int argc, char **argv) {
   result = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for result");
 
-  ret = clEnqueueWriteBuffer(command_queue, bytes, CL_TRUE, 0, vec_size, array, 0, NULL, &profiling_event);
+  ret = clEnqueueWriteBuffer(command_queue, bytes, CL_TRUE, 0, vec_size, array, 0, NULL, NULL);
   CLU_ERRCHECK(ret, "Failed to write bytes to device");
-  print_profiling_info("Write bytes into device memory");
 
 
   program = cluBuildProgramFromFile(context, device_id, program_name, NULL);
@@ -97,41 +60,81 @@ int main(int argc, char **argv) {
   kernel = clCreateKernel(program, "reduce", &ret);
   CLU_ERRCHECK(ret, "Failed to create reduce kernel from program");
 
-  cluSetKernelArguments(kernel, 4,
-    sizeof(cl_mem), (void *)&bytes,
-    local_work_size * sizeof(long), NULL,
-    sizeof(n), &n,
-    sizeof(cl_mem), (void *)&result
-  );
+  size_t result_array_size;
+  unsigned long length = n;
+  size_t i = 1;
+
+  unsigned long kernel_total_time = 0;
+
+  do {
+    result_array_size = global_work_size / local_work_size;
+
+    cluSetKernelArguments(kernel, 4,
+      sizeof(cl_mem), (void *)&bytes,
+      local_work_size * sizeof(long), NULL,
+      sizeof(unsigned long), &length,
+      sizeof(cl_mem), (void *)&result
+    );
+
+    CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
+      &global_work_offset, &global_work_size, &local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
+
+    printf("Stage %d: Reduced %d values to %d.\n", i, length, result_array_size);
 
 
-  CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
-    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
 
-  print_profiling_info("Run kernel");
+    // wait until event finishes
+    ret = clWaitForEvents(1, &profiling_event);
+    // get profiling data
+    cl_ulong event_start_time = (cl_ulong) 0;
+    cl_ulong event_end_time = (cl_ulong) 0;
+    ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, NULL);
+    ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, NULL);
 
-  size_t result_array_size = global_work_size / local_work_size;
-  long *result_array = malloc(sizeof(long) * result_array_size);
+    unsigned long kernel_time = (unsigned long)(event_end_time - event_start_time);
+    kernel_total_time += kernel_time;
 
-  CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, result,
-    CL_TRUE, 0, vec_size, result_array, 0, NULL, &profiling_event), "Failed reading back result");
+    printf("Kernel Execution Time: %f ms\n", kernel_time * 1.0e-6);
 
-  print_profiling_info("Read result matrix from device to host");
+    cl_mem helper = bytes;
+    bytes = result;
+    result = helper;
 
-  long result = 0;
+    length = result_array_size;
+    global_work_size = extend_to_multiple(result_array_size, local_work_size);
+    i++;
+  } while (result_array_size > 1);
 
-  for(size_t i = 0; i < result_array_size; i++) {
-    result += result_array[i];
-  }
+  unsigned long result_value;
+  CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, bytes,
+    CL_TRUE, 0, sizeof(unsigned long), &result_value, 0, NULL, NULL), "Failed reading back result");
 
-  printf("Result: %d\n", result);
+
+  printf("Total Kernel Execution Time: %f ms\n", kernel_total_time * 1.0e-6);
+
+
+  printf("Result: %d\n", result_value);
 
   timestamp end = now();
   printf("Total time: %.3fms\n", (end - begin) * 1000);
 
   // ---------- cleanup ----------
 
-  clean_up();
+  // ------------ Part D (cleanup) ------------ //
+
+  // wait for completed operations (there should be none)
+  CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue");
+  CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completion");
+  CLU_ERRCHECK(clReleaseKernel(kernel), "Failed to release kernel");
+  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
+
+  // free device memory
+  CLU_ERRCHECK(clReleaseMemObject(bytes), "Failed to release Matrix A");
+  CLU_ERRCHECK(clReleaseMemObject(result), "Failed to release Matrix B");
+
+  // free management resources
+  CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
+  CLU_ERRCHECK(clReleaseContext(context), "Failed to release OpenCL context");
 
   // done
   return 0;
