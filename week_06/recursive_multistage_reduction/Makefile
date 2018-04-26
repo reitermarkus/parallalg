@@ -26,29 +26,29 @@ ifneq ($(OS), Windows_NT)
   endif
 endif
 
-all: parallel_reduction_seq parallel_reduction_omp parallel_reduction_ocl
+all: reduction_seq reduction_omp reduction_ocl
 
-parallel_reduction_seq: parallel_reduction_seq.c
-	@$(CC) $(CC_FLAGS) parallel_reduction_seq.c -o parallel_reduction_seq
+reduction_seq: reduction_seq.c
+	@$(CC) $(CC_FLAGS) reduction_seq.c -o reduction_seq
 
-parallel_reduction_omp: parallel_reduction_omp.c
-	@$(CC) $(CC_FLAGS) parallel_reduction_omp.c -o parallel_reduction_omp -fopenmp
+reduction_omp: reduction_omp.c
+	@$(CC) $(CC_FLAGS) reduction_omp.c -o reduction_omp -fopenmp
 
-parallel_reduction_ocl: $(COMMON_DEPENDENCIES)
-	@$(CC) $(CC_FLAGS) $(CFILES) parallel_reduction_ocl.c -o parallel_reduction_ocl $(OPENCL_FLAGS)
+reduction_ocl: $(COMMON_DEPENDENCIES)
+	@$(CC) $(CC_FLAGS) $(CFILES) reduction_ocl.c -o reduction_ocl $(OPENCL_FLAGS)
 
 .PHONEY: clean
 clean:
-	$(RM) parallel_reduction_seq parallel_reduction_omp parallel_reduction_ocl
+	$(RM) reduction_seq reduction_omp reduction_ocl
 
 run: all
 	@echo "Sequential:"
-	@./parallel_reduction_seq
+	@./reduction_seq
 	@echo
 	@echo "OpenMP:"
-	@./parallel_reduction_omp
+	@./reduction_omp
 	@echo
 	@echo "OpenCL:"
-	@./parallel_reduction_ocl
+	@./reduction_ocl
 
 
