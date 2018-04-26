@@ -105,10 +105,11 @@ int main(int argc, char **argv) {
     sizeof(cl_mem), (void *)&result
   );
 
-  print_profiling_info("Run kernel");
 
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
-    global_work_offset, &global_work_size, local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel");
+    global_work_offset, &global_work_size, local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
+
+    print_profiling_info("Run kernel");
 
   CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, result,
     CL_TRUE, 0, vec_size, result_array, 0, NULL, &profiling_event), "Failed reading back result");
