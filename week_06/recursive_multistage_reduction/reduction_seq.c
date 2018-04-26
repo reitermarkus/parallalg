@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "utils.h"
+
 int main(int argc, char **argv) {
   srand(0);
 
@@ -14,11 +16,16 @@ int main(int argc, char **argv) {
     array[i] = (rand() % 2);
   }
 
+  timestamp begin = now();
+
   for (long i = 0; i < n; i++) {
     count += array[i];
   }
 
   printf("Count: %ld\n", count);
+
+  timestamp end = now();
+  printf("Total time: %.3fms\n", (end - begin) * 1000);
 
   return EXIT_SUCCESS;
 }
