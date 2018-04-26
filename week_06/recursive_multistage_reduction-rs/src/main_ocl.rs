@@ -1,8 +1,10 @@
 use std::fs::File;
 use std::io::{Read, BufReader};
+use std::time::Duration;
 
 extern crate ocl;
-use ocl::{ProQue, Device, DeviceType, Platform};
+use ocl::{ProQue, Device, DeviceType, Platform, Event};
+use ocl::core::{enqueue_kernel, get_event_profiling_info, ProfilingInfo, QUEUE_PROFILING_ENABLE};
 use ocl::enums::DeviceInfo;
 use ocl::enums::DeviceInfoResult::MaxWorkGroupSize;
 
@@ -30,6 +32,16 @@ fn reduce() -> ocl::Result<()> {
 
   let bytes = random_bytes(n, seed);
 
+  let ones: u64 = benchmark!("Serial", {
+    bytes.iter().sum()
+  });
+  println!("{}", ones);
+
+  let ones: u64 = benchmark!("Parallel", {
+    bytes.par_iter().sum()
+  });
+  println!("{}", ones);
+
   let file = File::open("../kernel.cl")?;
   let mut buf_reader = BufReader::new(file);
   let mut kernel_source = String::new();
@@ -41,6 +53,7 @@ fn reduce() -> ocl::Result<()> {
   let pro_que = ProQue::builder().src(kernel_source)
                                  .dims(n)
                                  .device(device)
+                                 .queue_properties(QUEUE_PROFILING_ENABLE)
                                  .build()?;
 
   let bytes_buffer = pro_que.buffer_builder().copy_host_slice(&bytes).build()?;
@@ -58,11 +71,6 @@ fn reduce() -> ocl::Result<()> {
 
   let groups = global_work_size / local_work_size;
 
-  let ones: u64 = benchmark! {
-    bytes.par_iter().sum()
-  };
-  println!("{}", ones);
-
   let kernel = pro_que.kernel_builder("reduce")
                       .global_work_offset([0])
                       .local_work_size([local_work_size])
@@ -73,14 +81,35 @@ fn reduce() -> ocl::Result<()> {
                       .arg_named("result", Some(&result_buffer))
                       .build()?;
 
+  let mut event = Event::empty();
 
-
-  let ones: u64 = benchmark! {
+  let ones: u64 = benchmark!("OpenCL (total)", {
     let mut result = vec![0; groups];
-    unsafe { kernel.enq()?; }
+
+    unsafe {
+      enqueue_kernel(
+        &pro_que.queue(), &kernel,
+        pro_que.dims().dim_count(),
+        Some(kernel.default_global_work_offset().to_lens().unwrap()),
+        &kernel.default_global_work_size().to_lens().unwrap(),
+        Some(kernel.default_local_work_size().to_lens().unwrap()),
+        None::<Event>, Some(&mut event)
+      )?;
+    }
+
     result_buffer.read(&mut result).enq()?;
-    result.iter().sum()
-  };
+
+    let start = get_event_profiling_info(&event, ProfilingInfo::Start).unwrap().time().unwrap();
+    let end = get_event_profiling_info(&event, ProfilingInfo::End).unwrap().time().unwrap();
+
+    let (ones, time) = benchmark! {
+      result.par_iter().sum()
+    };
+
+    print_benchmark!("OpenCL (on-device)", Duration::new(0, (end - start) as u32) + time);
+
+    ones
+  });
 
   println!("{}", ones);
 

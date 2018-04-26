@@ -1,20 +1,38 @@
 #[macro_export]
+
+macro_rules! duration_to_millis {
+  ($duration:expr) => {{
+    ($duration.as_secs() * 1_000) + ($duration.subsec_nanos() / 1_000_000) as u64
+  }}
+}
+
+macro_rules! print_benchmark {
+  ($name:expr, $duration:expr) => {{
+    println!("┌────────────────────┬───────────┐");
+    println!("│ {: <#18} │ {:#6 } ms │", $name, duration_to_millis!($duration));
+    println!("└────────────────────┴───────────┘");
+  }};
+}
+
 macro_rules! benchmark {
-  { $($b:tt)* } => {{
-    let into_ms = |x: std::time::Duration| (x.as_secs() * 1_000) + (x.subsec_nanos() / 1_000_000) as u64;
-
-    let start = std::time::Instant::now();
-
-    let e = {
+  ($name:expr, { $($b:tt)* }) => {{
+    let (result, time) = benchmark! {
       $($b)*
     };
 
-    let elapsed = start.elapsed();
+    print_benchmark!($name, time);
 
-    println!("┌────────────────────┬───────────┐");
-    println!("│ Total              │ {:#6 } ms │", into_ms(elapsed));
-    println!("└────────────────────┴───────────┘");
+    result
+  }};
+  { $($b:tt)* } => {{
+    let start = std::time::Instant::now();
 
-    e
+    let result = {
+      $($b)*
+    };
+
+    let time = start.elapsed();
+
+    (result, time)
   }};
 }

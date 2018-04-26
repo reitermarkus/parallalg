@@ -15,8 +15,8 @@ fn main() {
 
   let bytes = random_bytes(n, seed);
 
-  let ones: u64 = benchmark! {
+  let ones: u64 = benchmark!("Total", {
     bytes.par_iter().sum()
-  };
+  });
   println!("{}", ones);
 }
