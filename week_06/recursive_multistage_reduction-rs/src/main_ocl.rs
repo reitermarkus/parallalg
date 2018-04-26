@@ -25,7 +25,7 @@ macro_rules! multiple {
 }
 
 fn reduce() -> ocl::Result<()> {
-  let n = 4_000;
+  let n = 1_000_000;
   let seed = [0; 32];
 
   let bytes = random_bytes(n, seed);
@@ -64,7 +64,7 @@ fn reduce() -> ocl::Result<()> {
                       .local_work_size([local_work_size])
                       .global_work_size([multiple!(n, local_work_size)])
                       .arg_named("bytes", Some(&bytes_buffer))
-                      .arg_local::<usize>(n)
+                      .arg_local::<usize>(local_work_size)
                       .arg_named("length", &n)
                       .arg_named("result", Some(&result_buffer))
                       .build()?;
