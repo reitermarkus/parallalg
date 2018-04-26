@@ -105,15 +105,15 @@ int main(int argc, char **argv) {
     i++;
   } while (result_array_size > 1);
 
-  unsigned long result_value;
+  unsigned long count;
   CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, bytes,
-    CL_TRUE, 0, sizeof(unsigned long), &result_value, 0, NULL, NULL), "Failed reading back result");
+    CL_TRUE, 0, sizeof(unsigned long), &count, 0, NULL, NULL), "Failed reading back result");
 
 
   printf("Total Kernel Execution Time: %f ms\n", kernel_total_time * 1.0e-6);
 
 
-  printf("Result: %d\n", result_value);
+  printf("Count: %d\n", count);
 
   timestamp end = now();
   printf("Total time: %.3fms\n", (end - begin) * 1000);
