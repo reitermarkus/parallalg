@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
     printf("N = ");
     scanf("%ld", &n);
 
-    long *array = (long *) malloc(sizeof(int) * n);
+    long *array = (long *) malloc(sizeof(long) * n);
 
     for (long i = 0; i < n; i++) {
         array[i] = (rand() % 2);
