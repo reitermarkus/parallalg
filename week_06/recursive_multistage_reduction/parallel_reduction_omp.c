@@ -14,8 +14,9 @@ int main(int argc, char **argv) {
     array[i] = (rand() % 2);
   }
 
-  #pragma omp parallel for
+  #pragma omp parallel for reduction(+:count)
   for (long i = 0; i < n; i++) {
+    #pragma omp atomic
     count += array[i];
   }
 

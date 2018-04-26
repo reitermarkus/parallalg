@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
   long n = 1000000;
   long count = 0;
 
-  long *array = malloc(sizeof(int) * n);
+  long *array = malloc(sizeof(long) * n);
 
   for (long i = 0; i < n; i++) {
     array[i] = (rand() % 2);
