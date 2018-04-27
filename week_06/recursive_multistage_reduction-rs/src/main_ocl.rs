@@ -4,9 +4,8 @@ use std::time::Duration;
 
 extern crate ocl;
 use ocl::{ProQue, Device, DeviceType, Platform, Event};
-use ocl::core::{enqueue_kernel, get_event_profiling_info, ProfilingInfo, QUEUE_PROFILING_ENABLE};
-use ocl::enums::DeviceInfo;
-use ocl::enums::DeviceInfoResult::MaxWorkGroupSize;
+use ocl::flags::{QUEUE_PROFILING_ENABLE};
+use ocl::enums::{DeviceInfo, DeviceInfoResult::MaxWorkGroupSize, ProfilingInfo::Start, ProfilingInfo::End};
 
 extern crate rand;
 
@@ -87,20 +86,13 @@ fn reduce() -> ocl::Result<()> {
     let mut result = vec![0; groups];
 
     unsafe {
-      enqueue_kernel(
-        &pro_que.queue(), &kernel,
-        pro_que.dims().dim_count(),
-        Some(kernel.default_global_work_offset().to_lens().unwrap()),
-        &kernel.default_global_work_size().to_lens().unwrap(),
-        Some(kernel.default_local_work_size().to_lens().unwrap()),
-        None::<Event>, Some(&mut event)
-      )?;
+      kernel.cmd().enew(&mut event).enq()?;
     }
 
     result_buffer.read(&mut result).enq()?;
 
-    let start = get_event_profiling_info(&event, ProfilingInfo::Start).unwrap().time().unwrap();
-    let end = get_event_profiling_info(&event, ProfilingInfo::End).unwrap().time().unwrap();
+    let start = event.profiling_info(Start)?.time().unwrap();
+    let end = event.profiling_info(End)?.time().unwrap();
 
     let (ones, time) = benchmark! {
       result.par_iter().sum()
