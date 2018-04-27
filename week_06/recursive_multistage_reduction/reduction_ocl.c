@@ -49,6 +49,7 @@ int main(int argc, char **argv) {
   ret = clEnqueueWriteBuffer(command_queue, bytes, CL_TRUE, 0, vec_size, array, 0, NULL, NULL);
   CLU_ERRCHECK(ret, "Failed to write bytes to device");
 
+  free(array);
 
   program = cluBuildProgramFromFile(context, device_id, program_name, NULL);
 
@@ -137,5 +138,5 @@ int main(int argc, char **argv) {
   CLU_ERRCHECK(clReleaseContext(context), "Failed to release OpenCL context");
 
   // done
-  return 0;
+  return EXIT_SUCCESS;
 }

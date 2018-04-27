@@ -24,6 +24,8 @@ int main(int argc, char **argv) {
     count += array[i];
   }
 
+  free(array);
+
   printf("Count: %ld\n", count);
 
   timestamp end = now();
