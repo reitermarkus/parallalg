@@ -4,7 +4,7 @@ use std::mem;
 use std::time::Duration;
 
 extern crate ocl;
-use ocl::{ProQue, Device, DeviceType, Platform, Event};
+use ocl::{Buffer, ProQue, Device, DeviceType, Platform, Event};
 use ocl::flags::{QUEUE_PROFILING_ENABLE};
 use ocl::enums::{DeviceInfo, DeviceInfoResult::MaxWorkGroupSize, ProfilingInfo::Start, ProfilingInfo::End};
 
@@ -67,36 +67,35 @@ fn reduce() -> ocl::Result<()> {
     }
   };
 
-  let mut global_work_size = multiple!(n, local_work_size);
-
   let kernel = pro_que.kernel_builder("reduce")
                       .global_work_offset([0])
                       .local_work_size([local_work_size])
-                      .global_work_size([global_work_size])
-                      .arg_named("bytes", Some(&bytes_buffer))
+                      .arg_named("bytes", None::<&Buffer<u64>>)
                       .arg_local::<usize>(local_work_size)
-                      .arg_named("length", &n)
-                      .arg_named("result", Some(&result_buffer))
+                      .arg_named("length", 0)
+                      .arg_named("result", None::<&Buffer<u64>>)
                       .build()?;
 
   let ones: u64 = benchmark!("OpenCL (total)", {
     let mut length = n;
-    let mut result_array_size;
+    let mut global_work_size;
 
     let mut duration = Duration::new(0, 0);
 
-    loop {
-      result_array_size = global_work_size / local_work_size;
+    while length > 1 {
+      global_work_size = multiple!(length, local_work_size);
 
       kernel.set_arg("bytes", Some(&bytes_buffer))?;
-      //kernel.set_arg(1, local_work_size)?;
-      kernel.set_arg("length", &length)?;
+      kernel.set_arg("length", length)?;
       kernel.set_arg("result", Some(&result_buffer))?;
 
       let mut event = Event::empty();
 
       unsafe {
-        kernel.cmd().enew(&mut event).enq()?;
+        kernel.cmd()
+          .global_work_size([global_work_size])
+          .enew(&mut event)
+          .enq()?;
       }
 
       kernel.default_queue().unwrap().finish()?;
@@ -108,12 +107,7 @@ fn reduce() -> ocl::Result<()> {
 
       mem::swap(&mut bytes_buffer, &mut result_buffer);
 
-      if result_array_size == 1 {
-        break;
-      }
-
-      length = result_array_size;
-      global_work_size = multiple!(result_array_size, local_work_size);
+      length = global_work_size / local_work_size;
     }
 
     let mut result = vec![0; 1];
