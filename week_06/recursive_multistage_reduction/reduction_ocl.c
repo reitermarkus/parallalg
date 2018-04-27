@@ -37,7 +37,8 @@ int main(int argc, char **argv) {
   timestamp begin = now();
 
   device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
-  command_queue = clCreateCommandQueueWithProperties(context, device_id, CL_QUEUE_PROFILING_ENABLE , &ret);
+  cl_command_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+  command_queue = clCreateCommandQueueWithProperties(context, device_id, properties, &ret);
 
   // ------------ Part B (data management) ------------ //
   vec_size = sizeof(long) * n;

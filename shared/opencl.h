@@ -7,7 +7,9 @@
 #if __APPLE__
   #include <OpenCL/opencl.h>
 
-  #define clCreateCommandQueueWithProperties clCreateCommandQueue
+  #undef cl_command_queue_properties
+  #define cl_command_queue_properties cl_queue_properties_APPLE
+  #define clCreateCommandQueueWithProperties clCreateCommandQueueWithPropertiesAPPLE
 #else
   #include <CL/cl.h>
 #endif
