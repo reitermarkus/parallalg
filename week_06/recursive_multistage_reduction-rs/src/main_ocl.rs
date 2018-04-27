@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::{Read, BufReader};
+use std::mem;
 use std::time::Duration;
 
 extern crate ocl;
@@ -55,8 +56,8 @@ fn reduce() -> ocl::Result<()> {
                                  .queue_properties(QUEUE_PROFILING_ENABLE)
                                  .build()?;
 
-  let bytes_buffer = pro_que.buffer_builder().copy_host_slice(&bytes).build()?;
-  let result_buffer = pro_que.create_buffer::<u64>()?;
+  let mut bytes_buffer = pro_que.buffer_builder().copy_host_slice(&bytes).build()?;
+  let mut result_buffer = pro_que.create_buffer::<u64>()?;
 
   let local_work_size = {
     if let Ok(MaxWorkGroupSize(size)) = device.info(DeviceInfo::MaxWorkGroupSize) {
@@ -66,9 +67,7 @@ fn reduce() -> ocl::Result<()> {
     }
   };
 
-  let global_work_size = multiple!(n, local_work_size);
-
-  let groups = global_work_size / local_work_size;
+  let mut global_work_size = multiple!(n, local_work_size);
 
   let kernel = pro_que.kernel_builder("reduce")
                       .global_work_offset([0])
@@ -80,27 +79,50 @@ fn reduce() -> ocl::Result<()> {
                       .arg_named("result", Some(&result_buffer))
                       .build()?;
 
-  let mut event = Event::empty();
-
   let ones: u64 = benchmark!("OpenCL (total)", {
-    let mut result = vec![0; groups];
+    let mut length = n;
+    let mut result_array_size;
 
-    unsafe {
-      kernel.cmd().enew(&mut event).enq()?;
+    let mut duration = Duration::new(0, 0);
+
+    loop {
+      result_array_size = global_work_size / local_work_size;
+
+      kernel.set_arg("bytes", Some(&bytes_buffer))?;
+      //kernel.set_arg(1, local_work_size)?;
+      kernel.set_arg("length", &length)?;
+      kernel.set_arg("result", Some(&result_buffer))?;
+
+      let mut event = Event::empty();
+
+      unsafe {
+        kernel.cmd().enew(&mut event).enq()?;
+      }
+
+      kernel.default_queue().unwrap().finish()?;
+
+      let start = event.profiling_info(Start)?.time().unwrap();
+      let end = event.profiling_info(End)?.time().unwrap();
+
+      duration += Duration::new(0, (end - start) as u32);
+
+      mem::swap(&mut bytes_buffer, &mut result_buffer);
+
+      if result_array_size == 1 {
+        break;
+      }
+
+      length = result_array_size;
+      global_work_size = multiple!(result_array_size, local_work_size);
     }
 
-    result_buffer.read(&mut result).enq()?;
+    let mut result = vec![0; 1];
 
-    let start = event.profiling_info(Start)?.time().unwrap();
-    let end = event.profiling_info(End)?.time().unwrap();
+    bytes_buffer.read(&mut result).enq()?;
 
-    let (ones, time) = benchmark! {
-      result.par_iter().sum()
-    };
+    print_benchmark!("OpenCL (on-device)", duration);
 
-    print_benchmark!("OpenCL (on-device)", Duration::new(0, (end - start) as u32) + time);
-
-    ones
+    result[0]
   });
 
   println!("{}", ones);
