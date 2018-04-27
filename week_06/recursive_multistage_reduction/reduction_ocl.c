@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
   printf("Count: %d\n", count);
 
   timestamp end = now();
-  printf("Total time: %.3fms\n", (end - begin) * 1000);
+  printf("Total time: %.3f ms\n", (end - begin) * 1000);
 
   // ---------- cleanup ----------
 
