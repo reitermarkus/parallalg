@@ -1,95 +1,89 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "utils.h"
 #include "stb/image.h"
 #include "stb/image_write.h"
+#include "utils.h"
 
+int main(int argc, char **argv) {
+  if (argc != 3) {
+    printf("Usage: auto_levels [inputfile] [outputfile]\nExample: %s test.png test_out.png\n", argv[0]);
+    return EXIT_FAILURE;
+  }
 
-int main(int argc, char** argv) {
+  const char const* input_file_name = argv[1];
+  const char const* output_file_name = argv[2];
 
-    // parse input parameters
-    if(argc != 3) {
-      printf("Usage: auto_levels [inputfile] [outputfile]\nExample: %s test.png test_out.png\n", argv[0]);
-      return EXIT_FAILURE;
-    }
+  printf("Loading input file %s …\n", input_file_name);
+  int width, height, components;
+  unsigned char *data = stbi_load(input_file_name, &width, &height, &components, 0);
+  printf("Loaded image of size %d×%d with %d components.\n", width, height, components);
 
-    char* input_file_name = argv[1];
-    char* output_file_name = argv[2];
+  double start_time = now();
 
+  // ------ Analyse Image ------
 
-    // load input file
-    printf("Loading input file %s ..\n", input_file_name);
-    int width, height, components;
-    unsigned char *data = stbi_load(input_file_name, &width, &height, &components, 0);
-    printf("Loaded image of size %dx%d with %d components.\n", width,height,components);
+  // compute min/max/avg of each component
+  unsigned char min_val[components];
+  unsigned char max_val[components];
+  unsigned char avg_val[components];
 
-    // start the timer
-    double start_time = now();
+  // an auxilary array for computing the average
+  unsigned long long sum[components];
 
-    // ------ Analyse Image ------
+  // initialize
+  for (int c = 0; c < components; c++) {
+    min_val[c] = 255;
+    max_val[c] = 0;
+    sum[c] = 0;
+  }
 
-    // compute min/max/avg of each component
-    unsigned char min_val[components];
-    unsigned char max_val[components];
-    unsigned char avg_val[components];
-
-    // an auxilary array for computing the average
-    unsigned long long sum[components];
-
-    // initialize
-    for(int c = 0; c<components; c++) {
-      min_val[c] = 255;
-      max_val[c] = 0;
-      sum[c] = 0;
-    }
-
-    // compute min/max/sub
-    for(int x=0; x<width; ++x) {
-      for(int y=0; y<height; ++y) {
-        for(int c=0; c<components; ++c) {
-          unsigned char val = data[c + x*components + y*width*components];
-          if (val < min_val[c]) min_val[c] = val;
-          if (val > max_val[c]) max_val[c] = val;
-          sum[c] += val;
-        }
+  // compute min/max/sum
+  for (int x = 0; x < width; x++) {
+    for (int y = 0; y < height; y++) {
+      for (int c = 0; c < components; c++) {
+        unsigned char val = data[c + x * components + y * width * components];
+        if (val < min_val[c]) min_val[c] = val;
+        if (val > max_val[c]) max_val[c] = val;
+        sum[c] += val;
       }
     }
+  }
 
-    // compute average and multiplicative factors
-    float min_fac[components];
-    float max_fac[components];
-    for(int c=0; c<components; ++c) {
-      avg_val[c] = sum[c]/((unsigned long long)width*height);
-      min_fac[c] = (float)avg_val[c] / (float)(avg_val[c] - min_val[c]);
-      max_fac[c] = (255.0f-(float)avg_val[c]) / (float)(max_val[c] - avg_val[c]);
-      printf("\tComponent %1u: %3u / %3u / %3u * %3.2f / %3.2f\n", c, min_val[c], avg_val[c], max_val[c], min_fac[c], max_fac[c]);
-    }
+  // compute average and multiplicative factors
+  float min_fac[components];
+  float max_fac[components];
+  for (int c = 0; c < components; c++) {
+    avg_val[c] = sum[c] / (unsigned long long)(width * height);
+    min_fac[c] = (float)avg_val[c] / (float)(avg_val[c] - min_val[c]);
+    max_fac[c] = (255.0f - (float)avg_val[c]) / (float)(max_val[c] - avg_val[c]);
+    printf("\tComponent %1u: %3u / %3u / %3u * %3.2f / %3.2f\n", c, min_val[c], avg_val[c], max_val[c], min_fac[c], max_fac[c]);
+  }
 
-    // ------ Adjust Image ------
+  // ------ Adjust Image ------
 
-    for(int x=0; x<width; ++x) {
-      for(int y=0; y<height; ++y) {
-        for(int c=0; c<components; ++c) {
-          int index = c + x*components + y*width*components;
-          unsigned char val = data[index];
-          float v = (float)(val - avg_val[c]);
-          v *= (val < avg_val[c]) ? min_fac[c] : max_fac[c];
-          data[index] = (unsigned char)(v + avg_val[c]);
-        }
+  for (int x = 0; x < width; x++) {
+    for (int y = 0; y < height; y++) {
+      for (int c = 0; c < components; c++) {
+        int index = c + x * components + y * width * components;
+        unsigned char val = data[index];
+        float v = (float)(val - avg_val[c]);
+        v *= (val < avg_val[c]) ? min_fac[c] : max_fac[c];
+        data[index] = (unsigned char)(v + avg_val[c]);
       }
     }
+  }
 
-    printf("Done, took %.1fms\n", (now() - start_time)*1000.0);
+  printf("Done, took %.1fms\n", (now() - start_time) * 1000.0);
 
-    // ------ Store Image ------
+  // ------ Store Image ------
 
-    printf("Writing output image %s ...\n", output_file_name);
-    stbi_write_png(output_file_name,width,height,components,data,width*components);
-    stbi_image_free(data);
+  printf("Writing output image %s …\n", output_file_name);
+  stbi_write_png(output_file_name, width, height, components, data, width * components);
+  stbi_image_free(data);
 
-    printf("Done!\n");
+  printf("Done!\n");
 
-    // done
-    return EXIT_SUCCESS;
+  // done
+  return EXIT_SUCCESS;
 }
