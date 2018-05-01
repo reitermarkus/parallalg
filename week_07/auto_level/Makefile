@@ -26,7 +26,7 @@ ifneq ($(OS), Windows_NT)
   endif
 endif
 
-all: auto_level_seq
+all: auto_level_seq auto_level_ocl
 
 auto_level_seq: auto_level_seq.c
 	@$(CC) $(CC_FLAGS) auto_level_seq.c -lm -o auto_level_seq -fopenmp
