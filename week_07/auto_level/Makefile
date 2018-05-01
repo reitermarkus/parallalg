@@ -2,7 +2,7 @@ CC_FLAGS = -std=c11 -O3 -Werror -pedantic -I../../shared -D _POSIX_C_SOURCE=1993
 OPENCL_FLAGS = -lOpenCL
 
 HEADERS=$(wildcard */*.h)
-COMMON_DEPENDENCIES=Makefile stb/image.h stb/image_write.h
+COMMON_DEPENDENCIES=Makefile $(HEADERS)
 
 CFILES=$(wildcard */*.c)
 
