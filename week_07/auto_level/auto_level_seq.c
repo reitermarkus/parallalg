@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "stb/image.h"
-#include "stb/image_write.h"
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb/stb_image.h"
+#include "stb/stb_image_write.h"
 #include "utils.h"
 
 int main(int argc, char **argv) {
