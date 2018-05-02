@@ -7,6 +7,8 @@
 #include "stb/stb_image_write.h"
 
 #include "utils.h"
+#include "open_cl.h"
+#include "cl_utils.h"
 
 int main(int argc, char **argv) {
   if (argc != 3) {
@@ -23,6 +25,66 @@ int main(int argc, char **argv) {
   printf("Loaded image of size %d×%d with %d components.\n", width, height, components);
 
   double start_time = now();
+
+  cl_ulong* image = calloc(width * height * components, sizeof(cl_ulong));
+
+  for(size_t i = 0; i < width * height * components; i++) {
+    image[i] = (cl_ulong)data[i];
+  }
+
+  device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
+
+  size_t image_size = width * height * components * sizeof(cl_ulong);
+  cl_mem input_image = clCreateBuffer(context, CL_MEM_READ_WRITE, image_size, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for input image.");
+
+  cl_mem result = clCreateBuffer(context, CL_MEM_READ_WRITE, image_size, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for result.");
+
+  ret = clEnqueueWriteBuffer(command_queue, input_image, CL_TRUE, 0, image_size, image, 0, NULL, NULL);
+  CLU_ERRCHECK(ret, "Failed to write input image to device.");
+
+  const char* program_file = "kernel.cl";
+  program = cluBuildProgramFromFile(context, device_id, program_file, NULL);
+
+  cl_kernel kernel = clCreateKernel(program, "reduce_sum", &ret);
+  CLU_ERRCHECK(ret, "Failed to create kernel from program.");
+
+  unsigned long length = width * height;
+
+  while (length > 1) {
+    size_t global_work_offset = 0;
+    size_t local_work_size = 256;
+    size_t global_work_size = extend_to_multiple(length, local_work_size);
+
+    cluSetKernelArguments(kernel, 5,
+      sizeof(cl_mem), (void*)&input_image,
+      sizeof(unsigned char) * local_work_size * components, NULL,
+      sizeof(unsigned long), &length,
+      sizeof(int), &components,
+      sizeof(cl_mem), (void*)&result
+    );
+
+    CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
+      &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel");
+
+    cl_mem helper = input_image;
+    input_image = result;
+    result = helper;
+
+    length = global_work_size / local_work_size;
+  }
+
+
+  unsigned long long count[components];
+
+  CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, input_image,
+    CL_TRUE, 0, sizeof(unsigned long long) * components, count, 0, NULL, NULL), "Failed reading back result");
+
+
+  for (size_t c = 0; c < components; c++) {
+    printf("Component %1u Sum: %u\n", c, count[c]);
+  }
 
   // ------ Analyse Image ------
 
@@ -51,6 +113,10 @@ int main(int argc, char **argv) {
         sum[c] += val;
       }
     }
+  }
+
+  for (int c = 0; c < components; c++) {
+    printf("Component %1u Sum: %u\n", c, sum[c]);
   }
 
   // compute average and multiplicative factors
@@ -84,6 +150,8 @@ int main(int argc, char **argv) {
   printf("Writing output image %s …\n", output_file_name);
   stbi_write_png(output_file_name, width, height, components, data, width * components);
   stbi_image_free(data);
+
+  free(image);
 
   printf("Done!\n");
 
