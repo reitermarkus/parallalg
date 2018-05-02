@@ -1,40 +1,64 @@
-kernel void reduce_sum(global const ulong* input_image, local ulong* accumulator, const ulong length, const int components, global ulong* result) {
-  for (size_t c = 0; c < components; c++) {
-    size_t local_id = get_local_id(0) * components + c;
+#define INIT_ACCUMULATOR(default_value) do {\
+  for (size_t c = 0; c < components; c++) {\
+    size_t local_id = get_local_id(0) * components + c;\
+    \
+    if (get_global_id(0) < length) {\
+      accumulator[local_id] = input[get_global_id(0) * components + c];\
+    } else {\
+      accumulator[local_id] = default_value;\
+    }\
+  }\
+  \
+  barrier(CLK_LOCAL_MEM_FENCE);\
+} while (0);
 
-    if (get_global_id(0) < length) {
-      accumulator[local_id] = input_image[get_global_id(0) * components + c];
-    } else {
-      accumulator[local_id] = 0;
-    }
-  }
+#define LOOP(function) do {\
+  for (size_t offset = get_local_size(0) / 2; offset > 0; offset /= 2) {\
+    for (size_t c = 0; c < components; c++) {\
+      size_t local_id = get_local_id(0) * components + c;\
+      size_t offset_id = local_id + offset * components;\
+      \
+      if (get_local_id(0) < offset) {\
+        ulong byte1 = accumulator[local_id];\
+        ulong byte2 = accumulator[offset_id];\
+        accumulator[local_id] = function(byte1, byte2);\
+      }\
+    }\
+    \
+    barrier(CLK_LOCAL_MEM_FENCE);\
+  }\
+} while (0);
 
-  barrier(CLK_LOCAL_MEM_FENCE);
+#define WRITE_RESULTS do {\
+  barrier(CLK_LOCAL_MEM_FENCE);\
+  \
+  if (get_local_id(0) == 0) {\
+    size_t group_id = get_group_id(0);\
+    \
+    for (size_t c = 0; c < components; c++) {\
+      result[group_id * components + c] = accumulator[c];\
+    }\
+  }\
+} while (0);
 
-  for (size_t offset = get_local_size(0) / 2; offset > 0; offset /= 2) {
-    for (size_t c = 0; c < components; c++) {
-      size_t local_id = get_local_id(0) * components + c;
-      size_t offset_id = local_id + offset * components;
+ulong sum(ulong byte1, ulong byte2) {
+  return byte1 + byte2;
+}
 
-      if (get_local_id(0) < offset) {
-        ulong byte1 = accumulator[local_id];
-        ulong byte2 = accumulator[offset_id];
+kernel void reduce_min(global const ulong* input, local ulong* accumulator, const ulong length, const int components, global ulong* result) {
+  INIT_ACCUMULATOR(255);
+  LOOP(min);
+  WRITE_RESULTS;
+}
 
-        // printf("a[%d] = a[%d] + a[%d] = %u + %u\n", local_id, local_id, offset_id, byte1, byte2);
+kernel void reduce_max(global const ulong* input, local ulong* accumulator, const ulong length, const int components, global ulong* result) {
+  INIT_ACCUMULATOR(0);
+  LOOP(max);
+  WRITE_RESULTS;
+}
 
-        accumulator[local_id] = byte1 + byte2;
-      }
-    }
-
-    barrier(CLK_LOCAL_MEM_FENCE);
-  }
-
-  // Read local results.
-  if (get_local_id(0) == 0) {
-    size_t group_id = get_group_id(0);
-
-    for (size_t c = 0; c < components; c++) {
-      result[group_id * components + c] = accumulator[c];
-    }
-  }
+kernel void reduce_sum(global const ulong* input, local ulong* accumulator, const ulong length, const int components, global ulong* result) {
+  INIT_ACCUMULATOR(0);
+  LOOP(sum);
+  WRITE_RESULTS;
 }
