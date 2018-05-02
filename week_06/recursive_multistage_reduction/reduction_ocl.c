@@ -8,17 +8,12 @@
 #include "open_cl.h"
 #include "utils.h"
 
-static unsigned long n = 1000000;
-
-static size_t vec_size;
-
-static cl_mem bytes;
-static cl_mem result;
-
 int main(int argc, char **argv) {
   srand(0);
 
   const char *program_name = "../kernel.cl";
+
+  unsigned long n = 1000000;
 
   // 'parsing' optional input parameter = problem size
   if (argc > 1) {
@@ -44,10 +39,10 @@ int main(int argc, char **argv) {
   cl_command_queue command_queue = clCreateCommandQueueWithProperties(context, device_id, properties, &ret);
 
   // ------------ Part B (data management) ------------ //
-  vec_size = sizeof(long) * n;
-  bytes = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
+  size_t vec_size = sizeof(long) * n;
+  cl_mem bytes = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for bytes");
-  result = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
+  cl_mem result = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for result");
 
   ret = clEnqueueWriteBuffer(command_queue, bytes, CL_TRUE, 0, vec_size, array, 0, NULL, NULL);
