@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
   );
 
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
-      &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel.");
+    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel.");
 
   CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, input_image,
     CL_TRUE, 0, sizeof(unsigned long) * width * height * components, image, 0, NULL, NULL), "Failed reading back result.");
