@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
   cl_device_id device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
 
   size_t image_size = width * height * components * sizeof(*image);
-  cl_mem input_image = clCreateBuffer(context, CL_MEM_READ_WRITE, image_size, NULL, &ret);
+  cl_mem input_image = clCreateBuffer(context, CL_MEM_READ_ONLY, image_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for input image.");
 
   cl_mem result = clCreateBuffer(context, CL_MEM_READ_WRITE, image_size, NULL, &ret);
@@ -55,6 +55,7 @@ int main(int argc, char **argv) {
   CLU_ERRCHECK(ret, "Failed to create kernel from program.");
 
   unsigned long length = width * height;
+  size_t i = 0;
 
   while (length > 1) {
     size_t global_work_offset = 0;
@@ -62,7 +63,7 @@ int main(int argc, char **argv) {
     size_t global_work_size = extend_to_multiple(length, local_work_size);
 
     cluSetKernelArguments(kernel, 5,
-      sizeof(cl_mem), (void*)&input_image,
+      sizeof(cl_mem), (void*)(i == 0 ? &input_image : &result),
       sizeof(cl_ulong) * local_work_size * components, NULL,
       sizeof(cl_ulong), &length,
       sizeof(cl_int), &components,
@@ -72,17 +73,13 @@ int main(int argc, char **argv) {
     CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
       &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel");
 
-    cl_mem helper = input_image;
-    input_image = result;
-    result = helper;
-
     length = global_work_size / local_work_size;
+    i++;
   }
-
 
   unsigned long long count[components];
 
-  CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, input_image,
+  CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, result,
     CL_TRUE, 0, sizeof(unsigned long long) * components, count, 0, NULL, NULL), "Failed reading back result");
 
   // wait for completed operations (there should be none)
