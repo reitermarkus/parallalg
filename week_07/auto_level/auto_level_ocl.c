@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
   cl_context context;
   cl_device_id device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
 
-  size_t image_size = width * height * components * sizeof(cl_ulong);
+  size_t image_size = width * height * components * sizeof(*image);
   cl_mem input_image = clCreateBuffer(context, CL_MEM_READ_WRITE, image_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for input image.");
 
