@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
     avg_val[c] = sum[c] / (unsigned long long)(width * height);
     min_fac[c] = (float)avg_val[c] / (float)(avg_val[c] - min_val[c]);
     max_fac[c] = (255.0f - (float)avg_val[c]) / (float)(max_val[c] - avg_val[c]);
-    printf("\tComponent %1u: %3u / %3u / %3u * %3.2f / %3.2f\n", c, min_val[c], avg_val[c], max_val[c], min_fac[c], max_fac[c]);
+    printf("  Component %1u: %3u / %3u / %3u * %3.2f / %3.2f\n", c, min_val[c], avg_val[c], max_val[c], min_fac[c], max_fac[c]);
   }
 
   // ------ Adjust Image ------

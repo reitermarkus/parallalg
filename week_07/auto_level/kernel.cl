@@ -62,3 +62,25 @@ kernel void reduce_sum(global const ulong* input, local ulong* accumulator, cons
   LOOP(sum);
   WRITE_RESULTS;
 }
+
+kernel void adjust(global ulong* image, global const float* min_fac, global const float* max_fac, global const uchar* average, const ulong length, const int components) {
+  if (get_global_id(0) >= length) {
+    return;
+  }
+
+  for (size_t c = 0; c < components; c++) {
+    size_t index = get_global_id(0) * components + c;
+
+    uchar val = image[index];
+
+    float v = (float)(val - average[c]);
+
+    if (val < average[c]) {
+      v *= min_fac[c];
+    } else {
+      v *= max_fac[c];
+    }
+
+    image[index] = (v + average[c]);
+  }
+}

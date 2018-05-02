@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
   cl_device_id device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
 
   size_t image_size = width * height * components * sizeof(*image);
-  cl_mem input_image = clCreateBuffer(context, CL_MEM_READ_ONLY, image_size, NULL, &ret);
+  cl_mem input_image = clCreateBuffer(context, CL_MEM_READ_WRITE, image_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for input image.");
 
   cl_mem result = clCreateBuffer(context, CL_MEM_READ_WRITE, image_size, NULL, &ret);
@@ -86,94 +86,87 @@ int main(int argc, char **argv) {
   ret = clEnqueueWriteBuffer(command_queue, input_image, CL_TRUE, 0, image_size, image, 0, NULL, NULL);
   CLU_ERRCHECK(ret, "Failed to write input image to device.");
 
-  const char* program_file = "kernel.cl";
-  cl_program program = cluBuildProgramFromFile(context, device_id, program_file, NULL);
-
-  cl_kernel kernel = clCreateKernel(program, "reduce_sum", &ret);
-  CLU_ERRCHECK(ret, "Failed to create kernel from program.");
+  cl_program program = cluBuildProgramFromFile(context, device_id, "kernel.cl", NULL);
 
   unsigned long minimum[components];
   unsigned long maximum[components];
-  unsigned long count[components];
+  unsigned long sum[components];
 
   reduce(command_queue, program, "reduce_min", width, height, components, input_image, result, minimum);
   reduce(command_queue, program, "reduce_max", width, height, components, input_image, result, maximum);
-  reduce(command_queue, program, "reduce_sum", width, height, components, input_image, result, count);
-
-  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program.");
+  reduce(command_queue, program, "reduce_sum", width, height, components, input_image, result, sum);
 
   // Free device memory.
-  CLU_ERRCHECK(clReleaseMemObject(input_image), "Failed to release input buffer.");
   CLU_ERRCHECK(clReleaseMemObject(result), "Failed to release result buffer.");
+
+  // ------ Analyse Image ------
+
+  unsigned char average[components];
+
+  // compute average and multiplicative factors
+  float minimum_factor[components];
+  float maximum_factor[components];
+  for (int c = 0; c < components; c++) {
+    average[c] = sum[c] / (unsigned long)(width * height);
+    minimum_factor[c] = (float)average[c] / (float)(average[c] - minimum[c]);
+    maximum_factor[c] = (255.0f - (float)average[c]) / (float)(maximum[c] - average[c]);
+    printf("  Component %1u: %3u / %3u / %3u * %3.2f / %3.2f\n", c, minimum[c], average[c], maximum[c], minimum_factor[c], maximum_factor[c]);
+  }
+
+  cl_mem minimum_factor_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, components * sizeof(*minimum_factor), minimum_factor, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for input image.");
+
+  cl_mem maximum_factor_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, components * sizeof(*maximum_factor), maximum_factor, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for input image.");
+
+  cl_mem average_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, components * sizeof(*average), average, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for input image.");
+
+  cl_kernel kernel = clCreateKernel(program, "adjust", &ret);
+  CLU_ERRCHECK(ret, "Failed to create kernel from program.");
+
+  unsigned long length = width * height;
+
+  size_t global_work_offset = 0;
+  size_t local_work_size = 256;
+  size_t global_work_size = extend_to_multiple(length, local_work_size);
+
+  cluSetKernelArguments(kernel, 6,
+    sizeof(cl_mem), (void*)&input_image,
+    sizeof(cl_mem), (void*)&minimum_factor_buffer,
+    sizeof(cl_mem), (void*)&maximum_factor_buffer,
+    sizeof(cl_mem), (void*)&average_buffer,
+    sizeof(cl_ulong), &length,
+    sizeof(cl_int), &components
+  );
+
+  CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
+      &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel.");
+
+  CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, input_image,
+    CL_TRUE, 0, sizeof(unsigned long) * width * height * components, image, 0, NULL, NULL), "Failed reading back result.");
+
+  CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue.");
+  CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completion.");
+
+  CLU_ERRCHECK(clReleaseKernel(kernel), "Failed to release kernel.");
+
+  CLU_ERRCHECK(clReleaseMemObject(input_image), "Failed to release input buffer.");
+  CLU_ERRCHECK(clReleaseMemObject(minimum_factor_buffer), "Failed to release input buffer.");
+  CLU_ERRCHECK(clReleaseMemObject(maximum_factor_buffer), "Failed to release input buffer.");
+  CLU_ERRCHECK(clReleaseMemObject(average_buffer), "Failed to release input buffer.");
+
+  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program.");
 
   // Free management resources.
   CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue.");
   CLU_ERRCHECK(clReleaseContext(context), "Failed to release OpenCL context.");
 
-  for (size_t c = 0; c < components; c++) {
-    printf("Component %1u Min: %u\n", c, minimum[c]);
-    printf("Component %1u Max: %u\n", c, maximum[c]);
-    printf("Component %1u Sum: %u\n", c, count[c]);
+  for(size_t i = 0; i < width * height * components; i++) {
+    data[i] = (unsigned char)image[i];
   }
 
-  // ------ Analyse Image ------
-
-  // compute min/max/avg of each component
-  unsigned char min_val[components];
-  unsigned char max_val[components];
-  unsigned char avg_val[components];
-
-  // an auxilary array for computing the average
-  unsigned long long sum[components];
-
-  // initialize
-  for (int c = 0; c < components; c++) {
-    min_val[c] = 255;
-    max_val[c] = 0;
-    sum[c] = 0;
-  }
-
-  // compute min/max/sum
-  for (int x = 0; x < width; x++) {
-    for (int y = 0; y < height; y++) {
-      for (int c = 0; c < components; c++) {
-        unsigned char val = data[x * components + y * width * components + c];
-        if (val < min_val[c]) min_val[c] = val;
-        if (val > max_val[c]) max_val[c] = val;
-        sum[c] += val;
-      }
-    }
-  }
-
-  for (int c = 0; c < components; c++) {
-    printf("Component %1u Min: %u\n", c, min_val[c]);
-    printf("Component %1u Max: %u\n", c, max_val[c]);
-    printf("Component %1u Sum: %u\n", c, sum[c]);
-  }
-
-  // compute average and multiplicative factors
-  float min_fac[components];
-  float max_fac[components];
-  for (int c = 0; c < components; c++) {
-    avg_val[c] = sum[c] / (unsigned long)(width * height);
-    min_fac[c] = (float)avg_val[c] / (float)(avg_val[c] - min_val[c]);
-    max_fac[c] = (255.0f - (float)avg_val[c]) / (float)(max_val[c] - avg_val[c]);
-    printf("\tComponent %1u: %3u / %3u / %3u * %3.2f / %3.2f\n", c, min_val[c], avg_val[c], max_val[c], min_fac[c], max_fac[c]);
-  }
-
-  // ------ Adjust Image ------
-
-  for (int x = 0; x < width; x++) {
-    for (int y = 0; y < height; y++) {
-      for (int c = 0; c < components; c++) {
-        int index = c + x * components + y * width * components;
-        unsigned char val = data[index];
-        float v = (float)(val - avg_val[c]);
-        v *= (val < avg_val[c]) ? min_fac[c] : max_fac[c];
-        data[index] = (unsigned char)(v + avg_val[c]);
-      }
-    }
-  }
+  free(image);
 
   printf("Done, took %.1fms\n", (now() - start_time) * 1000.0);
 
@@ -182,8 +175,6 @@ int main(int argc, char **argv) {
   printf("Writing output image %s …\n", output_file_name);
   stbi_write_png(output_file_name, width, height, components, data, width * components);
   stbi_image_free(data);
-
-  free(image);
 
   printf("Done!\n");
 
