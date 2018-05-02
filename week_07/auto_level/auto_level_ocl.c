@@ -63,9 +63,9 @@ int main(int argc, char **argv) {
 
     cluSetKernelArguments(kernel, 5,
       sizeof(cl_mem), (void*)&input_image,
-      sizeof(unsigned long) * local_work_size * components, NULL,
-      sizeof(unsigned long), &length,
-      sizeof(int), &components,
+      sizeof(cl_ulong) * local_work_size * components, NULL,
+      sizeof(cl_ulong), &length,
+      sizeof(cl_int), &components,
       sizeof(cl_mem), (void*)&result
     );
 
