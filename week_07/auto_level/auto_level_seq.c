@@ -5,6 +5,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb/stb_image.h"
 #include "stb/stb_image_write.h"
+
 #include "utils.h"
 
 int main(int argc, char **argv) {
@@ -44,7 +45,7 @@ int main(int argc, char **argv) {
   for (int x = 0; x < width; x++) {
     for (int y = 0; y < height; y++) {
       for (int c = 0; c < components; c++) {
-        unsigned char val = data[c + x * components + y * width * components];
+        unsigned char val = data[x * components + y * width * components + c];
         if (val < min_val[c]) min_val[c] = val;
         if (val > max_val[c]) max_val[c] = val;
         sum[c] += val;
