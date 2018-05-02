@@ -36,9 +36,12 @@ int main(int argc, char **argv) {
 
   timestamp begin = now();
 
-  device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
+  cl_int ret;
+
+  cl_context context;
+  cl_device_id device_id = cluInitDevice(DEVICE_NUMBER, &context, NULL);
   cl_command_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
-  command_queue = clCreateCommandQueueWithProperties(context, device_id, properties, &ret);
+  cl_command_queue command_queue = clCreateCommandQueueWithProperties(context, device_id, properties, &ret);
 
   // ------------ Part B (data management) ------------ //
   vec_size = sizeof(long) * n;
@@ -52,14 +55,14 @@ int main(int argc, char **argv) {
 
   free(array);
 
-  program = cluBuildProgramFromFile(context, device_id, program_name, NULL);
+  cl_program program = cluBuildProgramFromFile(context, device_id, program_name, NULL);
 
   // 11) schedule kernel
   size_t global_work_offset = 0;
   size_t local_work_size = 256;
   size_t global_work_size = extend_to_multiple(n, local_work_size);
 
-  kernel = clCreateKernel(program, "reduce", &ret);
+  cl_kernel kernel = clCreateKernel(program, "reduce", &ret);
   CLU_ERRCHECK(ret, "Failed to create reduce kernel from program");
 
   size_t result_array_size;
@@ -78,6 +81,7 @@ int main(int argc, char **argv) {
       sizeof(cl_mem), (void *)&result
     );
 
+    cl_event profiling_event;
     CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
       &global_work_offset, &global_work_size, &local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
 

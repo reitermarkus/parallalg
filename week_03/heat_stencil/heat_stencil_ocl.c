@@ -16,64 +16,6 @@ static Matrix matrix_a;
 static cl_mem dev_vec_a;
 static cl_mem dev_vec_b;
 
-void init_platform() {
-  // initialize OpenCL local state variables
-  platform_id = NULL;
-  device_id = NULL;
-  command_queue = NULL;
-  program = NULL;
-  kernel = NULL;
-  context = NULL;
-
-  // ------------ Part A (resource management) ------------ //
-  device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
-}
-
-void init_devices() {
-  // ------------ Part B (data management) ------------ //
-  vec_size = sizeof(value_t) * n * n;
-  dev_vec_a = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
-  dev_vec_b = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
-
-  ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, matrix_a, 0, NULL, NULL);
-}
-
-void create_program(const char* program_name) {
-  kernel_code code = load_code(program_name);
-  program = clCreateProgramWithSource(context, 1, &code.code, (const size_t *)&code.size, &ret);
-
-  ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
-
-  if (ret != CL_SUCCESS) {
-    size_t size = 1 << 20; // 1MB
-    char* msg = malloc(size);
-    size_t msg_size;
-
-    clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, msg, &msg_size);
-
-    printf("Build Error:\n%s", msg);
-    exit(1);
-  }
-}
-
-void clean_up() {
-  // ------------ Part D (cleanup) ------------ //
-
-  // wait for completed operations (there should be none)
-  ret = clFlush(command_queue);
-  ret = clFinish(command_queue);
-  ret = clReleaseKernel(kernel);
-  ret = clReleaseProgram(program);
-
-  // free device memory
-  ret = clReleaseMemObject(dev_vec_a);
-  ret = clReleaseMemObject(dev_vec_b);
-
-  // free management resources
-  ret = clReleaseCommandQueue(command_queue);
-  ret = clReleaseContext(context);
-}
-
 int main(int argc, char** argv) {
   const char* program_name = "heat_stencil.cl";
 
@@ -106,15 +48,41 @@ int main(int argc, char** argv) {
 
   timestamp begin = now();
 
-  init_platform();
-  init_devices();
-  create_program(program_name);
+  cl_int ret;
+
+  // ------------ Part A (resource management) ------------ //
+  cl_context context;
+  cl_command_queue command_queue;
+  cl_device_id device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
+
+  // ------------ Part B (data management) ------------ //
+  vec_size = sizeof(value_t) * n * n;
+  dev_vec_a = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
+  dev_vec_b = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
+
+  ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, matrix_a, 0, NULL, NULL);
+
+  kernel_code code = load_code(program_name);
+  cl_program program = clCreateProgramWithSource(context, 1, &code.code, (const size_t *)&code.size, &ret);
+
+  ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
+
+  if (ret != CL_SUCCESS) {
+    size_t size = 1 << 20; // 1MB
+    char* msg = malloc(size);
+    size_t msg_size;
+
+    clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, msg, &msg_size);
+
+    printf("Build Error:\n%s", msg);
+    exit(1);
+  }
 
   // 11) schedule kernel
   size_t global_work_offset[] = {0, 0};
   size_t global_work_size[] = {n, n};
 
-  kernel = clCreateKernel(program, "calc_temp", &ret);
+  cl_kernel kernel = clCreateKernel(program, "calc_temp", &ret);
   ret = clSetKernelArg(kernel, 2, sizeof(n), &n);
   ret = clSetKernelArg(kernel, 3, sizeof(source_x), &source_x);
   ret = clSetKernelArg(kernel, 4, sizeof(source_y), &source_y);
@@ -158,7 +126,22 @@ int main(int argc, char** argv) {
 
   // ---------- cleanup ----------
 
-  clean_up();
+  // ------------ Part D (cleanup) ------------ //
+
+  // wait for completed operations (there should be none)
+  ret = clFlush(command_queue);
+  ret = clFinish(command_queue);
+  ret = clReleaseKernel(kernel);
+  ret = clReleaseProgram(program);
+
+  // free device memory
+  ret = clReleaseMemObject(dev_vec_a);
+  ret = clReleaseMemObject(dev_vec_b);
+
+  // free management resources
+  ret = clReleaseCommandQueue(command_queue);
+  ret = clReleaseContext(context);
+
   free(matrix_a);
 
   // done

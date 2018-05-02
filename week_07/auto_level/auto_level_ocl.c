@@ -32,7 +32,11 @@ int main(int argc, char **argv) {
     image[i] = (cl_ulong)data[i];
   }
 
-  device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
+  cl_int ret;
+
+  cl_command_queue command_queue;
+  cl_context context;
+  cl_device_id device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
 
   size_t image_size = width * height * components * sizeof(cl_ulong);
   cl_mem input_image = clCreateBuffer(context, CL_MEM_READ_WRITE, image_size, NULL, &ret);
@@ -45,7 +49,7 @@ int main(int argc, char **argv) {
   CLU_ERRCHECK(ret, "Failed to write input image to device.");
 
   const char* program_file = "kernel.cl";
-  program = cluBuildProgramFromFile(context, device_id, program_file, NULL);
+  cl_program program = cluBuildProgramFromFile(context, device_id, program_file, NULL);
 
   cl_kernel kernel = clCreateKernel(program, "reduce_sum", &ret);
   CLU_ERRCHECK(ret, "Failed to create kernel from program.");

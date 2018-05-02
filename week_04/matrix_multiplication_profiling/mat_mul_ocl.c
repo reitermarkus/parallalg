@@ -15,9 +15,11 @@ static cl_mem dev_vec_res;
 static cl_ulong event_total_time = (cl_ulong)0;
 static size_t ev_return_bytes;
 
+static cl_event profiling_event;
+
 void print_profiling_info(const char* event_description) {
   // wait until event finishes
-  ret = clWaitForEvents(1, &profiling_event);
+  cl_int ret = clWaitForEvents(1, &profiling_event);
   // get profiling data
   cl_ulong event_start_time = (cl_ulong) 0;
   cl_ulong event_end_time = (cl_ulong) 0;
@@ -28,40 +30,6 @@ void print_profiling_info(const char* event_description) {
   event_total_time += total;
   printf("%s:\n", event_description);
   printf("  %f ms\n", total * 1.0e-6);
-}
-
-void clean_up() {
-  // ------------ Part D (cleanup) ------------ //
-
-  // wait for completed operations (there should be none)
-  CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
-  CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
-  CLU_ERRCHECK(clReleaseKernel(kernel),   "Failed to release kernel");
-  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
-
-  // free device memory
-  CLU_ERRCHECK(clReleaseMemObject(dev_vec_a), "Failed to release Matrix A");
-  CLU_ERRCHECK(clReleaseMemObject(dev_vec_b), "Failed to release Matrix B");
-  CLU_ERRCHECK(clReleaseMemObject(dev_vec_res), "Failed to release Matrix C");
-
-  // free management resources
-  CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
-  CLU_ERRCHECK(clReleaseContext(context),            "Failed to release OpenCL context");
-}
-
-void create_program() {
-  program = cluBuildProgramFromFile(context, device_id, "mat_mul.cl", NULL);
-
-  if (ret != CL_SUCCESS) {
-    size_t size = 1 << 20; // 1MB
-    char* msg = malloc(size);
-    size_t msg_size;
-
-    clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, msg, &msg_size);
-
-    printf("Build Error:\n%s", msg);
-    exit(1);
-  }
 }
 
 int main(int argc, char** argv) {
@@ -86,17 +54,13 @@ int main(int argc, char** argv) {
   // -------------------- START -------------------- //
   timestamp begin = now();
 
-  // initialize OpenCL local state variables
-  platform_id = NULL;
-  device_id = NULL;
-  command_queue = NULL;
-  program = NULL;
-  kernel = NULL;
-  context = NULL;
+  cl_int ret;
 
   // ------------ Part A (resource management) ------------ //
-  device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
-  command_queue = clCreateCommandQueueWithProperties(context, device_id, CL_QUEUE_PROFILING_ENABLE , &ret);
+  cl_context context;
+  cl_device_id device_id = cluInitDevice(DEVICE_NUMBER, &context, NULL);
+  cl_command_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+  cl_command_queue command_queue = clCreateCommandQueueWithProperties(context, device_id, properties, &ret);
 
   // ------------ Part B (data management) ------------ //
 
@@ -115,9 +79,20 @@ int main(int argc, char** argv) {
   CLU_ERRCHECK(ret, "Failed to write matrix B to device");
   print_profiling_info("Write matrix B into device memory");
 
-  create_program();
+  cl_program program = cluBuildProgramFromFile(context, device_id, "mat_mul.cl", NULL);
 
-  kernel = clCreateKernel(program, kernel_name, &ret);
+  if (ret != CL_SUCCESS) {
+    size_t size = 1 << 20; // 1MB
+    char* msg = malloc(size);
+    size_t msg_size;
+
+    clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, size, msg, &msg_size);
+
+    printf("Build Error:\n%s", msg);
+    exit(1);
+  }
+
+  cl_kernel kernel = clCreateKernel(program, kernel_name, &ret);
   CLU_ERRCHECK(ret, "Failed to create mat_mul kernel from program");
 
   cluSetKernelArguments(kernel, 4,
@@ -143,7 +118,22 @@ int main(int argc, char** argv) {
 
   print_profiling_info("Read result matrix from device to host");
 
-  clean_up();
+  // ------------ Part D (cleanup) ------------ //
+
+  // wait for completed operations (there should be none)
+  CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
+  CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
+  CLU_ERRCHECK(clReleaseKernel(kernel),   "Failed to release kernel");
+  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
+
+  // free device memory
+  CLU_ERRCHECK(clReleaseMemObject(dev_vec_a), "Failed to release Matrix A");
+  CLU_ERRCHECK(clReleaseMemObject(dev_vec_b), "Failed to release Matrix B");
+  CLU_ERRCHECK(clReleaseMemObject(dev_vec_res), "Failed to release Matrix C");
+
+  // free management resources
+  CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
+  CLU_ERRCHECK(clReleaseContext(context),            "Failed to release OpenCL context");
 
   timestamp end = now();
   // -------------------- END -------------------- //

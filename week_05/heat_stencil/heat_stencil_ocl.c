@@ -16,24 +16,6 @@ static Matrix matrix_a;
 static cl_mem dev_vec_a;
 static cl_mem dev_vec_b;
 
-void clean_up() {
-  // ------------ Part D (cleanup) ------------ //
-
-  // wait for completed operations (there should be none)
-  CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
-  CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
-  CLU_ERRCHECK(clReleaseKernel(kernel),   "Failed to release kernel");
-  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
-
-  // free device memory
-  CLU_ERRCHECK(clReleaseMemObject(dev_vec_a), "Failed to release Matrix A");
-  CLU_ERRCHECK(clReleaseMemObject(dev_vec_b), "Failed to release Matrix B");
-
-  // free management resources
-  CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
-  CLU_ERRCHECK(clReleaseContext(context),            "Failed to release OpenCL context");
-}
-
 int main(int argc, char** argv) {
   const char* program_name = "heat_stencil.cl";
 
@@ -66,7 +48,11 @@ int main(int argc, char** argv) {
 
   timestamp begin = now();
 
-  device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
+  cl_context context;
+  cl_command_queue command_queue;
+  cl_device_id device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
+
+  cl_int ret;
 
   // ------------ Part B (data management) ------------ //
   vec_size = sizeof(value_t) * n * n;
@@ -78,7 +64,7 @@ int main(int argc, char** argv) {
   ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, matrix_a, 0, NULL, NULL);
   CLU_ERRCHECK(ret, "Failed to write vector A to device");
 
-  program = cluBuildProgramFromFile(context, device_id, program_name, NULL);
+  cl_program program = cluBuildProgramFromFile(context, device_id, program_name, NULL);
 
   // 11) schedule kernel
   size_t global_work_offset[] = {0, 0};
@@ -88,7 +74,7 @@ int main(int argc, char** argv) {
     extend_to_multiple(n, local_work_size[1]),
   };
 
-  kernel = clCreateKernel(program, "calc_temp", &ret);
+  cl_kernel kernel = clCreateKernel(program, "calc_temp", &ret);
   CLU_ERRCHECK(ret, "Failed to create calc_temp kernel from program");
 
   ret = clSetKernelArg(kernel, 2, (local_work_size[0] + 2) * (local_work_size[1] + 2) * sizeof(float), NULL);
@@ -147,7 +133,22 @@ int main(int argc, char** argv) {
 
   // ---------- cleanup ----------
 
-  clean_up();
+  // ------------ Part D (cleanup) ------------ //
+
+  // wait for completed operations (there should be none)
+  CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
+  CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
+  CLU_ERRCHECK(clReleaseKernel(kernel),   "Failed to release kernel");
+  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
+
+  // free device memory
+  CLU_ERRCHECK(clReleaseMemObject(dev_vec_a), "Failed to release Matrix A");
+  CLU_ERRCHECK(clReleaseMemObject(dev_vec_b), "Failed to release Matrix B");
+
+  // free management resources
+  CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
+  CLU_ERRCHECK(clReleaseContext(context),            "Failed to release OpenCL context");
+
   free(matrix_a);
 
   // done
