@@ -24,9 +24,6 @@ int main(int argc, char **argv) {
   unsigned char *data = stbi_load(input_file_name, &width, &height, &components, 0);
   printf("Loaded image of size %d×%d with %d components.\n", width, height, components);
 
-  width = 2;
-  height = 2;
-
   double start_time = now();
 
   cl_ulong* image = calloc(width * height * components, sizeof(cl_ulong));
