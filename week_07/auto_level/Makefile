@@ -32,7 +32,7 @@ auto_level_seq: auto_level_seq.c
 	@$(CC) $(CC_FLAGS) auto_level_seq.c -lm -o auto_level_seq -fopenmp
 
 auto_level_ocl: $(COMMON_DEPENDENCIES)
-	@$(CC) $(CC_FLAGS) $(CFILES) auto_level_ocl.c -o auto_level_ocl $(OPENCL_FLAGS)
+	@$(CC) $(CC_FLAGS) $(CFILES) auto_level_ocl.c -lm -o auto_level_ocl $(OPENCL_FLAGS)
 
 .PHONEY: clean
 clean:
