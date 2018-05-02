@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     );
 
     CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
-      &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel");
+      &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel.");
 
     length = global_work_size / local_work_size;
     i++;
@@ -80,21 +80,21 @@ int main(int argc, char **argv) {
   unsigned long long count[components];
 
   CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, result,
-    CL_TRUE, 0, sizeof(unsigned long long) * components, count, 0, NULL, NULL), "Failed reading back result");
+    CL_TRUE, 0, sizeof(unsigned long long) * components, count, 0, NULL, NULL), "Failed reading back result.");
 
   // wait for completed operations (there should be none)
-  CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue");
-  CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completion");
-  CLU_ERRCHECK(clReleaseKernel(kernel), "Failed to release kernel");
-  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
+  CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue.");
+  CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completion.");
+  CLU_ERRCHECK(clReleaseKernel(kernel), "Failed to release kernel.");
+  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program.");
 
   // free device memory
   CLU_ERRCHECK(clReleaseMemObject(input_image), "Failed to release input buffer.");
   CLU_ERRCHECK(clReleaseMemObject(result), "Failed to release result buffer.");
 
   // free management resources
-  CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
-  CLU_ERRCHECK(clReleaseContext(context), "Failed to release OpenCL context");
+  CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue.");
+  CLU_ERRCHECK(clReleaseContext(context), "Failed to release OpenCL context.");
 
   for (size_t c = 0; c < components; c++) {
     printf("Component %1u Sum: %u\n", c, count[c]);
