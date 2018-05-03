@@ -10,19 +10,19 @@
 #include "open_cl.h"
 #include "cl_utils.h"
 
-void reduce(cl_command_queue command_queue, cl_program program, const char* kernel_name, int width, int height, int components, cl_mem input_image, cl_mem result, unsigned long* output) {
+void reduce(cl_command_queue command_queue, cl_program program, const char* kernel_name, int width, int height, int components, cl_mem input_image, cl_mem result, cl_ulong* output) {
 
   cl_int ret;
   cl_kernel kernel = clCreateKernel(program, kernel_name, &ret);
   CLU_ERRCHECK(ret, "Failed to create kernel from program.");
 
-  unsigned long length = width * height;
+  cl_ulong length = (cl_ulong)width * (cl_ulong)height;
   size_t i = 0;
 
   while (length > 1) {
-    size_t global_work_offset = 0;
-    size_t local_work_size = 256;
-    size_t global_work_size = extend_to_multiple(length, local_work_size);
+    const size_t global_work_offset = 0;
+    const size_t local_work_size = 256;
+    const size_t global_work_size = extend_to_multiple(length, local_work_size);
 
     cluSetKernelArguments(kernel, 5,
       sizeof(cl_mem), (void*)(i == 0 ? &input_image : &result),
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
 
   double start_time = now();
 
-  cl_ulong* image = calloc(width * height * components, sizeof(cl_ulong));
+  cl_ulong* image = malloc(width * height * components * sizeof(*image));
 
   for(size_t i = 0; i < width * height * components; i++) {
     image[i] = (cl_ulong)data[i];
@@ -76,7 +76,8 @@ int main(int argc, char **argv) {
   cl_context context;
   cl_device_id device_id = cluInitDevice(DEVICE_NUMBER, &context, &command_queue);
 
-  size_t image_size = width * height * components * sizeof(*image);
+  size_t image_size = (size_t)width * (size_t)height * (size_t)components * sizeof(*image);
+  printf("Buffer Size: %lu\n", image_size);
   cl_mem input_image = clCreateBuffer(context, CL_MEM_READ_WRITE, image_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for input image.");
 
@@ -88,9 +89,9 @@ int main(int argc, char **argv) {
 
   cl_program program = cluBuildProgramFromFile(context, device_id, "kernel.cl", NULL);
 
-  unsigned long minimum[components];
-  unsigned long maximum[components];
-  unsigned long sum[components];
+  cl_ulong minimum[components];
+  cl_ulong maximum[components];
+  cl_ulong sum[components];
 
   reduce(command_queue, program, "reduce_min", width, height, components, input_image, result, minimum);
   reduce(command_queue, program, "reduce_max", width, height, components, input_image, result, maximum);
@@ -101,15 +102,15 @@ int main(int argc, char **argv) {
 
   // ------ Analyse Image ------
 
-  unsigned char average[components];
+  cl_uchar average[components];
 
   // compute average and multiplicative factors
   float minimum_factor[components];
   float maximum_factor[components];
   for (int c = 0; c < components; c++) {
-    average[c] = sum[c] / (unsigned long)(width * height);
-    minimum_factor[c] = (float)average[c] / (float)(average[c] - minimum[c]);
-    maximum_factor[c] = (255.0f - (float)average[c]) / (float)(maximum[c] - average[c]);
+    average[c] = sum[c] / ((cl_ulong)width * (cl_ulong)height);
+    minimum_factor[c] = (float)average[c] / ((float)average[c] - (float)minimum[c]);
+    maximum_factor[c] = (255.0f - (float)average[c]) / ((float)maximum[c] - (float)average[c]);
     printf("  Component %1u: %3u / %3u / %3u * %3.2f / %3.2f\n", c, minimum[c], average[c], maximum[c], minimum_factor[c], maximum_factor[c]);
   }
 
@@ -125,11 +126,11 @@ int main(int argc, char **argv) {
   cl_kernel kernel = clCreateKernel(program, "adjust", &ret);
   CLU_ERRCHECK(ret, "Failed to create kernel from program.");
 
-  unsigned long length = width * height;
+  cl_ulong length = (cl_ulong)width * (cl_ulong)height;
 
-  size_t global_work_offset = 0;
-  size_t local_work_size = 256;
-  size_t global_work_size = extend_to_multiple(length, local_work_size);
+  const size_t global_work_offset = 0;
+  const size_t local_work_size = 256;
+  const size_t global_work_size = extend_to_multiple(length, local_work_size);
 
   cluSetKernelArguments(kernel, 6,
     sizeof(cl_mem), (void*)&input_image,
@@ -144,7 +145,7 @@ int main(int argc, char **argv) {
     &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel.");
 
   CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, input_image,
-    CL_TRUE, 0, sizeof(unsigned long) * width * height * components, image, 0, NULL, NULL), "Failed reading back result.");
+    CL_TRUE, 0, sizeof(*image) * width * height * components, image, 0, NULL, NULL), "Failed reading back result.");
 
   CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue.");
   CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completion.");
