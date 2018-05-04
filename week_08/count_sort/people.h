@@ -10,8 +10,8 @@
 #define NAME_LEN 32
 
 #define BUF_SIZE 16
-#define FIRST_NAMES_FILE "first_names.txt"
-#define LAST_NAMES_FILE "last_names.txt"
+#define FIRST_NAMES_FILE "../first_names.txt"
+#define LAST_NAMES_FILE "../last_names.txt"
 
 typedef char name_t[NAME_LEN];
 

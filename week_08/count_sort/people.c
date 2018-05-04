@@ -3,7 +3,7 @@
 int count_lines(const char *filename) {
 	int lines = 0;
 	FILE *f = fopen(filename, "r");
-	assert(f != NULL);
+  assert(f != NULL);
 
 	char c;
 	while((c = fgetc(f)) != EOF) if(c == '\n') lines++;
