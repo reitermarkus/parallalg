@@ -1,0 +1,19 @@
+[package]
+name = "count_sort"
+version = "0.1.0"
+authors = ["Michael Kaltschmid <kaltschmidmichael@gmail.com>"]
+build = "build.rs"
+
+[dependencies]
+libc = "0.2.0"
+
+[build-dependencies]
+cc = "1.0.15"
+
+[[bin]]
+name = "main_seq"
+path = "src/main_seq.rs"
+
+[[bin]]
+name = "main_par"
+path = "src/main_par.rs"
