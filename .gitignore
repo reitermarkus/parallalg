@@ -53,6 +53,8 @@ Mkfile.old
 dkms.conf
 
 *.txt
+!/week_08/*.txt
+
 *.pdf
 
 ../../\.vscode/
