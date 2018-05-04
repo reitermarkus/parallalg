@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <time.h>
 
 #define MAX_AGE 120
 #define NAME_LEN 32
@@ -21,4 +22,4 @@ typedef struct {
 
 int count_lines(const char *filename);
 int load_names(const char *filename, char ***storage);
-void gen_name(name_t buffer);
+char* gen_name();
