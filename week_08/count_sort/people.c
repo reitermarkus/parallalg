@@ -43,7 +43,6 @@ int load_names(const char *filename, char ***storage) {
 	FILE *f = fopen(filename, "r");
 
 	int lines = count_lines(f);
-  printf("Lines: %d\n", lines);
 	*storage = (char**)malloc(lines * sizeof(char*));
 	char *space = (char*)malloc(lines * BUF_SIZE * sizeof(char));
 
