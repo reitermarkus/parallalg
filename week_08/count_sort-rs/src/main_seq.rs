@@ -18,7 +18,7 @@ fn generate_name() -> String {
 
 fn print_list(list: &HashMap<usize, String>) {
   for (n, name) in list {
-      println!("{} | {}", n, name);
+      println!("{: >#3} | {}", n, name);
   }
 }
 
