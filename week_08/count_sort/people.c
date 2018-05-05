@@ -2,13 +2,23 @@
 
 #include "people.h"
 
+#define loop while (true)
+
+#define lazy_static(type, name, null, init) \
+  static type name = NULL;\
+  \
+  if (name == null) {\
+    name = init;\
+  }
+
+
 int count_lines(FILE* file) {
   if (file == NULL) {
     return 0;
   }
 
   fpos_t current_position;
-  fgetpos(file, &current_position);
+  assert(fgetpos(file, &current_position) == 0);
 
   rewind(file);
 
@@ -16,7 +26,7 @@ int count_lines(FILE* file) {
 
 	char c = '\n';
 
-  while (true) {
+  loop {
     char previous_char = c;
 
     c = fgetc(file);
@@ -24,7 +34,6 @@ int count_lines(FILE* file) {
     if (c == '\n') {
       lines++;
     } else if (c == EOF) {
-
       if (previous_char != '\n') {
         lines++;
       }
@@ -33,55 +42,42 @@ int count_lines(FILE* file) {
     }
   }
 
-  int ret = fsetpos(file, &current_position);
-  assert(ret == 0);
+  assert(fsetpos(file, &current_position) == 0);
 
 	return lines;
 }
 
-int load_names(const char *filename, char ***storage) {
+char** load_names(const char *filename, int* lines) {
 	FILE *f = fopen(filename, "r");
 
-	int lines = count_lines(f);
-	*storage = (char**)malloc(lines * sizeof(char*));
-	char *space = (char*)malloc(lines * BUF_SIZE * sizeof(char));
+	*lines = count_lines(f);
+	char** storage = (char**)malloc(*lines * sizeof(char*));
+	char* space = (char*)malloc(*lines * BUF_SIZE * sizeof(char));
 
-	for(int i = 0; i < lines; i++) {
-		(*storage)[i] = space + i * BUF_SIZE;
+	for(int i = 0; i < *lines; i++) {
+		storage[i] = space + i * BUF_SIZE;
 
-		assert(fgets((*storage)[i], BUF_SIZE-1, f) != NULL);
+		assert(fgets(storage[i], BUF_SIZE-1, f) != NULL);
 
 		// remove whitespace chars, if any
 		char *c;
-		while((c = strchr((*storage)[i], '\n'))) *c = '\0';
-		while((c = strchr((*storage)[i], '\r'))) *c = '\0';
-		while((c = strchr((*storage)[i], ' '))) *c = '\0';
+		while((c = strchr(storage[i], '\n'))) *c = '\0';
+		while((c = strchr(storage[i], '\r'))) *c = '\0';
+		while((c = strchr(storage[i], ' '))) *c = '\0';
 	}
 
 	fclose(f);
-	return lines;
+	return storage;
 }
 
 char* gen_name() {
-  static bool seeded = false;
+  lazy_static(bool, seeded, false, true; srand(time(0)));
 
-  if (!seeded) {
-    srand(time(0));
-    seeded = true;
-  }
-
-  static char** first_names = NULL;
-  static char** last_names = NULL;
   static int first_name_count, last_name_count;
+  lazy_static(char**, first_names, NULL, load_names(FIRST_NAMES_FILE, &first_name_count));
+  lazy_static(char**, last_names,  NULL, load_names(LAST_NAMES_FILE,  &last_name_count));
+
   static name_t buffer;
-
-	if (first_names == NULL) { // initialize on first call
-		first_name_count = load_names(FIRST_NAMES_FILE, &first_names);
-	}
-
-  if (last_names == NULL) {
-		last_name_count = load_names(LAST_NAMES_FILE, &last_names);
-  }
 
   snprintf(buffer, NAME_LEN, "%s %s",
     first_names[rand() % first_name_count],
