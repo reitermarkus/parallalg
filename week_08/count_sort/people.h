@@ -21,4 +21,5 @@ typedef struct {
 } person_t;
 
 char** load_names(const char *filename, size_t* lines);
+void free_names();
 char* gen_name();

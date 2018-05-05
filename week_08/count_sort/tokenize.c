@@ -14,13 +14,10 @@ static void* checked_realloc(void *ptr, size_t size) {
   return ptr;
 }
 
-char** tokenize(const char* str, const char* sep, size_t* len) {
-  if (!str || !sep || !strlen(str) || !strlen(sep)) {
+char** tokenize(char* string, const char* sep, size_t* len) {
+  if (string == NULL || sep == NULL || !strlen(string) || !strlen(sep)) {
     return NULL;
   }
-
-  char *string = malloc(sizeof(*string) * (strlen(str) + 1));
-  strcpy(string, str);
 
   size_t token_count = 0;
   char** tokens = NULL;
@@ -33,11 +30,11 @@ char** tokenize(const char* str, const char* sep, size_t* len) {
     token;
     token = str_split(NULL, sep, &last_string)
   ) {
-    tokens = checked_realloc(tokens, sizeof(*tokens) * ++token_count);
+    tokens = checked_realloc(tokens, sizeof(tokens) * ++token_count);
     tokens[token_count - 1] = token;
   }
 
-  tokens = checked_realloc(tokens, sizeof(*tokens) * (token_count + 1));
+  tokens = checked_realloc(tokens, sizeof(tokens) * (token_count + 1));
   tokens[token_count] = NULL;
 
   if (len != NULL) {

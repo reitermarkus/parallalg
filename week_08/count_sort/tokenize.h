@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 
-char** tokenize(const char* str, const char* sep, size_t* len);
+char** tokenize(char* string, const char* sep, size_t* len);
 void free_tokens(char** tokens);
 
 inline char* str_split(char *str, const char *delim, char **saveptr) {
