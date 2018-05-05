@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 #include "people.h"
 
 int count_lines(FILE* file) {
@@ -62,20 +64,29 @@ int load_names(const char *filename, char ***storage) {
 }
 
 char* gen_name() {
-	srand(time(0));
-	static char** first_names = NULL;
-	static char** last_names = NULL;
-	static int first_name_count, last_name_count;
+  static bool seeded = false;
+
+  if (!seeded) {
+    srand(time(0));
+    seeded = true;
+  }
+
+  static char** first_names = NULL;
+  static char** last_names = NULL;
+  static int first_name_count, last_name_count;
   static name_t buffer;
 
-	if(first_names == NULL) { // initialize on first call
+	if (first_names == NULL) { // initialize on first call
 		first_name_count = load_names(FIRST_NAMES_FILE, &first_names);
-		last_name_count = load_names(LAST_NAMES_FILE, &last_names);
 	}
 
-	snprintf(buffer, NAME_LEN, "%s %s",
-		first_names[rand()%first_name_count],
-		last_names[rand()%last_name_count]);
+  if (last_names == NULL) {
+		last_name_count = load_names(LAST_NAMES_FILE, &last_names);
+  }
+
+  snprintf(buffer, NAME_LEN, "%s %s",
+    first_names[rand() % first_name_count],
+    last_names[rand() % last_name_count]);
 
   return buffer;
 }
