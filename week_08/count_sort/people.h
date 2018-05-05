@@ -20,5 +20,5 @@ typedef struct {
 	name_t name;
 } person_t;
 
-char** load_names(const char *filename, int* lines);
+char** load_names(const char *filename, size_t* lines);
 char* gen_name();
