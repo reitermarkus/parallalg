@@ -20,6 +20,5 @@ typedef struct {
 	name_t name;
 } person_t;
 
-int count_lines(const char *filename);
 int load_names(const char *filename, char ***storage);
 char* gen_name();
