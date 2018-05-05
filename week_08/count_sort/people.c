@@ -49,9 +49,13 @@ char* gen_name() {
 }
 
 void free_names() {
-  free_tokens(first_names);
-  free_tokens(last_names);
+  if (first_names != NULL) {
+    free_tokens(first_names);
+    first_names = NULL;
+  }
 
-  first_names = NULL;
-  last_names = NULL;
+  if (last_names != NULL) {
+    free_tokens(last_names);
+    last_names = NULL;
+  }
 }
