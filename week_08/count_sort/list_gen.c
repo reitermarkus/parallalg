@@ -52,7 +52,7 @@ void create_person_list(person_t *persons, int n) {
   person_t p;
 
   for (int i = 0; i < n; i++) {
-    p.age = rand() % 120;
+    p.age = rand() % MAX_AGE;
     strcpy(p.name, gen_name());
     persons[i] = p;
   }
