@@ -21,11 +21,8 @@ fn count_sort(input: Vec<usize>) -> Vec<usize> {
   let size = input.len();
   let max = input.iter().fold(0, |acc_max, &b| acc_max.max(b));
 
-  let mut count_arr : Vec<usize> = (0..(max + 1)).map(|i| {
-    if i < (max + 1) {
-      return (0..size).fold(0, |acc, j| if input[j] < i {acc + 1} else {acc})
-    } else { return 1 }
-  }).collect();
+  let mut count_arr : Vec<usize> = (0..(max + 1)).map(|i|
+    (0..size).fold(0, |acc, j| if input[j] < i {acc + 1} else {acc})).collect();
 
   let mut result = vec![0; size];
 
