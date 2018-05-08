@@ -18,17 +18,16 @@ fn print_list(list: &Vec<Person>) {
 }
 
 fn count_sort(input: Vec<usize>) -> Vec<usize> {
-  let size = input.len();
   let max = input.iter().fold(0, |acc_max, &b| acc_max.max(b));
 
   let mut count_arr : Vec<usize> = (0..(max + 1)).map(|i|
-    (0..size).fold(0, |acc, j| if input[j] < i {acc + 1} else {acc})).collect();
+    input.iter().fold(0, |acc, &elem| if elem < i {acc + 1} else {acc})).collect();
 
-  let mut result = vec![0; size];
+  let mut result = vec![0; input.len()];
 
-  input.iter().for_each(|&element| {
-    if let Some(index) = count_arr.get_mut(element) {
-      result[*index] = element;
+  input.iter().for_each(|&elem| {
+    if let Some(index) = count_arr.get_mut(elem) {
+      result[*index] = elem;
       *index += 1;
     }
   });
