@@ -1,3 +1,6 @@
+#![feature(test)]
+extern crate test;
+
 extern crate libc;
 
 extern crate rand;
@@ -58,4 +61,46 @@ fn main() {
   let sorted_persons = count_sort(persons, |p| p.age);
 
   print_list(&sorted_persons);
+}
+
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use test::Bencher;
+
+  extern crate rand;
+  use rand::distributions::{IndependentSample, Range};
+
+  #[test]
+  fn test_count_sort() {
+    assert_eq!(count_sort(vec![6, 5, 8, 2, 1], |&e| e), vec![1, 2, 5, 6, 8]);
+  }
+
+  fn numbers() -> Vec<usize> {
+    (0..1000).map(|_| {
+      Range::new(1, 10).ind_sample(&mut rand::thread_rng())
+    }).collect()
+  }
+
+  #[bench]
+  fn bench_count_sort(b: &mut Bencher) {
+    let numbers = numbers();
+
+    b.iter(|| {
+      let cloned_numbers = numbers.clone();
+      count_sort(cloned_numbers, |&e| e)
+    });
+  }
+
+  #[bench]
+  fn bench_sort(b: &mut Bencher) {
+    let numbers = numbers();
+
+    b.iter(|| {
+      let mut cloned_numbers = numbers.clone();
+      cloned_numbers.sort();
+      cloned_numbers
+    });
+  }
 }
