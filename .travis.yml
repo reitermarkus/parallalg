@@ -1,2 +1,30 @@
+language: c
+
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode9.1
+      env:
+        - MATRIX_EVAL="brew install llvm"
+    - os: linux
+      compiler: gcc-7
+      env:
+        - MATRIX_EVAL="export CC='gcc-7'"
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-7
+
+before_script:
+  - export CXXFLAGS='-Werror'
+  - eval "${MATRIX_EVAL}"
+  - cd week_08/count_sort
+
+script:
+  - make
+
 notifications:
   email: false
