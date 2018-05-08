@@ -17,16 +17,20 @@ fn print_list(list: &Vec<Person>) {
   }
 }
 
-fn count_sort(input: Vec<usize>) -> Vec<usize> {
-  let max = input.iter().fold(0, |acc_max, &b| acc_max.max(b));
+fn count_sort<U, F>(input: Vec<U>, sort_by: F) -> Vec<U>
+  where F: Fn(&U) -> usize {
 
-  let mut count_arr : Vec<usize> = (0..(max + 1)).map(|i|
-    input.iter().fold(0, |acc, &elem| if elem < i {acc + 1} else {acc})).collect();
+  let max = input.iter().fold(0, |acc_max, b| acc_max.max(sort_by(b)));
 
-  let mut result = vec![0; input.len()];
+  let mut count_arr : Vec<usize> = (0..(max + 1)).map(|i| {
+    input.iter().fold(0, |acc, elem| if sort_by(elem) < i { acc + 1 } else { acc })
+  }).collect();
 
-  input.iter().for_each(|&elem| {
-    if let Some(index) = count_arr.get_mut(elem) {
+  let mut result: Vec<U> = Vec::with_capacity(input.len());
+  unsafe { result.set_len(input.len()) }
+
+  input.into_iter().for_each(|elem| {
+    if let Some(index) = count_arr.get_mut(sort_by(&elem)) {
       result[*index] = elem;
       *index += 1;
     }
@@ -50,4 +54,8 @@ fn main() {
   }).collect();
 
   print_list(&persons);
+
+  let sorted_persons = count_sort(persons, |p| p.age);
+
+  print_list(&sorted_persons);
 }
