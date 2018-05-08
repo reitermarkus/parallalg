@@ -109,7 +109,11 @@ cl_program cluBuildProgramFromFile(cl_context context, cl_device_id device_id, c
   rewind(fp);
 
   char* source = (char*)calloc(size + 1, sizeof(char));
-  fread(source, sizeof(char), size, fp);
+
+  if(fread(source, sizeof(char), size, fp) == 0) {
+    perror("fread");
+    exit(EXIT_FAILURE);
+  }
 
   fclose(fp);
 
