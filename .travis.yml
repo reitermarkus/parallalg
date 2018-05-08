@@ -17,6 +17,7 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - gcc-7
+      - opencl-headers
 
 before_script:
   - export CCFLAGS='-Werror'
