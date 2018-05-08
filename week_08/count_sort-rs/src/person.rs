@@ -1,5 +1,4 @@
 pub struct Person {
-  age: usize,
-  name: String,
+  pub age: usize,
+  pub name: String,
 }
-
