@@ -19,7 +19,7 @@ addons:
       - gcc-7
 
 before_script:
-  - export CXXFLAGS='-Werror'
+  - export CCFLAGS='-Werror'
   - eval "${MATRIX_EVAL}"
   - cd week_08/count_sort
 

@@ -14,7 +14,11 @@ char** load_names(const char *filename, size_t* lines) {
   rewind(file);
 
   char* content = malloc((size + 1) * sizeof(char));
-  fread(content, sizeof(char), size, file);
+
+  if(fread(content, sizeof(char), size, file) == 0) {
+    perror("fread");
+    exit(EXIT_FAILURE);
+  }
 
   fclose(file);
 
