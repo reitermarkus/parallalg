@@ -1,14 +1,14 @@
-CC_FLAGS = -std=c11 -O3 -Werror -pedantic -I../../shared -D _POSIX_C_SOURCE=199309L
+CC_FLAGS = -std=c11 -O3 -Werror -pedantic -I../../shared -D _POSIX_C_SOURCE=200809L
 OPENCL_FLAGS = -lOpenCL
 
 ifneq ($(OS), Windows_NT)
   ifeq ($(shell uname -s), Darwin)
-    ifeq ($(shell brew ls gcc &>/dev/null; echo $$?), 0)
-      GCC_PREFIX = $(shell brew --prefix gcc)
-      CC = $(GCC_PREFIX)/bin/gcc-8
+    ifeq ($(shell brew ls gcc@7 &>/dev/null; echo $$?), 0)
+      GCC_PREFIX = $(shell brew --prefix gcc@7)
+      CC = $(GCC_PREFIX)/bin/gcc-7
       OPENCL_FLAGS = -framework OpenCL
     else
-      $(error "GCC is not installed, run `brew install gcc`")
+      $(error "GCC is not installed, run `brew install gcc@7`")
     endif
 
     # Use dedicated GPU on MacBookPro.
