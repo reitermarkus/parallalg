@@ -19,19 +19,13 @@ fn print_list(list: &Vec<Person>) {
 
 fn count_sort(input: Vec<usize>) -> Vec<usize> {
   let size = input.len();
-
-  // find max
   let max = input.iter().fold(0, |acc_max, &b| acc_max.max(b));
 
-  let mut count_arr = vec![0; max + 1];
-
-  for i in 0..size {
-    count_arr[input[i]] += 1;
-  }
-
-  for i in 0..(max + 1) {
-    count_arr[i] = (0..size).fold(0, |acc, j| if input[j] < i {acc + 1} else {acc});
-  }
+  let mut count_arr : Vec<usize> = (0..(max + 1)).map(|i| {
+    if i < (max + 1) {
+      return (0..size).fold(0, |acc, j| if input[j] < i {acc + 1} else {acc})
+    } else { return 1 }
+  }).collect();
 
   let mut result = vec![0; size];
 
@@ -59,9 +53,4 @@ fn main() {
   }).collect();
 
   print_list(&persons);
-
-  let vdd = vec![1, 3, 4, 2, 5, 7, 6];
-
-  let sorted = count_sort(vdd);
-  println!("{:?}", sorted);
 }
