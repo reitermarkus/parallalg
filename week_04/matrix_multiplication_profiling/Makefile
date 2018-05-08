@@ -5,7 +5,7 @@ ifneq ($(OS), Windows_NT)
   ifeq ($(shell uname -s), Darwin)
     ifeq ($(shell brew ls gcc &>/dev/null; echo $$?), 0)
       GCC_PREFIX = $(shell brew --prefix gcc)
-      CC = $(GCC_PREFIX)/bin/gcc-7
+      CC = $(GCC_PREFIX)/bin/gcc-8
       OPENCL_FLAGS = -framework OpenCL
     else
       $(error "GCC is not installed, run `brew install gcc`")

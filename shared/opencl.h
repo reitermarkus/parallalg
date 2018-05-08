@@ -12,6 +12,10 @@
   #define clCreateCommandQueueWithProperties clCreateCommandQueueWithPropertiesAPPLE
 #else
   #include <CL/cl.h>
+
+  #ifndef clCreateCommandQueueWithProperties
+  #define clCreateCommandQueueWithProperties clCreateCommandQueue
+  #endif
 #endif
 
 #endif
