@@ -29,8 +29,7 @@ fn count_sort(input: Vec<usize>) -> Vec<usize> {
 
   let mut result = vec![0; size];
 
-  for i in 0..size {
-    let e = input[i];
+  for &e in input.iter() {
     result[count_arr[e]] = e;
     count_arr[e] += 1;
   }
