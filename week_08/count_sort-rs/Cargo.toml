@@ -7,6 +7,7 @@ build = "build.rs"
 [dependencies]
 libc = "0.2.0"
 rand = "0.4.2"
+rayon = "1.0.1"
 
 [build-dependencies]
 cc = "1.0.15"
@@ -15,7 +16,6 @@ cc = "1.0.15"
 name = "main_seq"
 path = "src/main_seq.rs"
 
-# [[bin]]
-# name = "main_par"
-# path = "src/main_par.rs"
-#
+[[bin]]
+name = "main_par"
+path = "src/main_par.rs"
