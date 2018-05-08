@@ -29,10 +29,12 @@ fn count_sort(input: Vec<usize>) -> Vec<usize> {
 
   let mut result = vec![0; size];
 
-  for &e in input.iter() {
-    result[count_arr[e]] = e;
-    count_arr[e] += 1;
-  }
+  input.iter().for_each(|&element| {
+    if let Some(index) = count_arr.get_mut(element) {
+      result[*index] = element;
+      *index += 1;
+    }
+  });
 
   result
 }
