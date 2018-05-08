@@ -2,23 +2,14 @@
 extern crate test;
 
 extern crate libc;
-
 extern crate rand;
-use rand::distributions::{IndependentSample, Range};
 
-use std::{env};
-
-mod name_generator;
-use name_generator::NameGenerator;
+use std::env;
 
 mod person;
-use person::Person;
+use person::{print_persons, generate_persons};
 
-fn print_list(list: &Vec<Person>) {
-  for person in list {
-    println!("{: >#3} | {}", person.age, person.name);
-  }
-}
+mod name_generator;
 
 fn count_sort<U, F>(input: Vec<U>, sort_by: F) -> Vec<U>
   where F: Fn(&U) -> usize {
@@ -45,22 +36,13 @@ fn count_sort<U, F>(input: Vec<U>, sort_by: F) -> Vec<U>
 fn main() {
   let args: Vec<String> = env::args().collect();
   let name_count: usize = args.get(1).map_or(None, |x| x.parse().ok()).unwrap_or(1337);
+  let persons = generate_persons(name_count);
 
-  let name_generator = NameGenerator::new();
-  let age_range = Range::new(1, 101);
-
-  let persons: Vec<Person> = (0..name_count).map(|_| {
-    Person {
-      age:  age_range.ind_sample(&mut rand::thread_rng()),
-      name: name_generator.generate(),
-    }
-  }).collect();
-
-  print_list(&persons);
+  print_persons(&persons);
 
   let sorted_persons = count_sort(persons, |p| p.age);
 
-  print_list(&sorted_persons);
+  print_persons(&sorted_persons);
 }
 
 
