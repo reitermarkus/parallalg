@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
     n = atoi(argv[1]);
   }
   int T = n * 100;
-  printf("Computing heat-distribution for room size n=%d for T=%d timesteps\n", n, T);
+  printf("Computing heat-distribution for room size n=%ld for T=%d timesteps\n", n, T);
 
   // create a buffer for storing temperature fields
   matrix_a = create_matrix(n, n);

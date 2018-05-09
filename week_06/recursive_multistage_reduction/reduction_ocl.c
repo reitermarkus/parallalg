@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
       &global_work_offset, &global_work_size, &local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
 
-    printf("Stage %d: Reduced %d values to %d.\n", i, length, result_array_size);
+    printf("Stage %ld: Reduced %ld values to %ld.\n", i, length, result_array_size);
 
 
 
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
   printf("Total Kernel Execution Time: %f ms\n", kernel_total_time * 1.0e-6);
 
 
-  printf("Count: %d\n", count);
+  printf("Count: %ld\n", count);
 
   timestamp end = now();
   printf("Total time: %.3f ms\n", (end - begin) * 1000);
