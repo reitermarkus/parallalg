@@ -13,7 +13,7 @@ void print_list(person_t *list, int size) {
 void count_sort(person_t *input, int size) {
   int max = 0;
 
-  // find highest number
+  // step 1) find highest number
   for (int i = 0; i < size; i++) {
     if (input[i].age > max)
       max = input[i].age;
@@ -22,11 +22,13 @@ void count_sort(person_t *input, int size) {
   // initialize count array of size max with 0's
   int *count_arr = (int *)calloc(max + 1, sizeof(int));
 
-  // count occurences
+  // step 2) count occurences
   for (int i = 0; i < size; i++) {
     count_arr[input[i].age]++;
   }
 
+  // step 3) 
+  // for each element "e" in count_arr count number of entries which are in the input array and lower than "e"
   for (int i = 0; i <= max; i++) {
     int count = 0;
     for (int j = 0; j < size; j++) {
@@ -36,8 +38,10 @@ void count_sort(person_t *input, int size) {
     count_arr[i] = count;
   }
 
+  // initialize a result array
   person_t *result = (person_t *)calloc(size, sizeof(person_t));
 
+  // step 4) insert elements in right order into result array
   for (int i = 0; i < size; i++) {
     person_t p = input[i];
     result[count_arr[p.age]++] = p;
