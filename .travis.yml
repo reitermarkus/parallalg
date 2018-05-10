@@ -18,7 +18,6 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - gcc-7
-      - opencl-headers
       - ocl-icd-opencl-dev
 
 before_script:
