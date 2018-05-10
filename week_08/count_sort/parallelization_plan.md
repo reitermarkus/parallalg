@@ -16,7 +16,7 @@ Kann mit Synchronisierung der Variable "max" parallelisiert werden.
     count_arr[input[i].age]++;
   }
 ```
-Kann parallelisiert werden, da die workitems unabhängig voneinander arbeiten.
+Kann parallelisiert werden, da die workitems unabhängig voneinander arbeiten. Jedoch muss aber das count_arr-array synchronisiert werden, da input[i] mehrmals der gleiche Index sein kann.
 
 
 ## Step 3) Berechne für jedes Element e in C, die Anzahl von Einträgen, die im Array A und kleiner dem Element e sind
