@@ -18,6 +18,7 @@ addons:
     packages:
       - gcc-7
       - opencl-headers
+      - ocl-icd-opencl-dev
 
 before_script:
   - export CCFLAGS='-Werror'
