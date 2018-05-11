@@ -12,7 +12,6 @@ static cl_mem dev_vec_b;
 static cl_mem dev_vec_res;
 
 int main(int argc, char** argv) {
-  const char* program_name = "mat_mul.cl";
   const char* kernel_name = "mat_mul";
 
   int n = 1000;

@@ -19,12 +19,12 @@ static cl_event profiling_event;
 
 void print_profiling_info(const char* event_description) {
   // wait until event finishes
-  cl_int ret = clWaitForEvents(1, &profiling_event);
+  clWaitForEvents(1, &profiling_event);
   // get profiling data
   cl_ulong event_start_time = (cl_ulong) 0;
   cl_ulong event_end_time = (cl_ulong) 0;
-  ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, &ev_return_bytes);
-  ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, &ev_return_bytes);
+  clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, &ev_return_bytes);
+  clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, &ev_return_bytes);
 
   unsigned long total = (unsigned long)(event_end_time - event_start_time);
   event_total_time += total;
@@ -33,7 +33,6 @@ void print_profiling_info(const char* event_description) {
 }
 
 int main(int argc, char** argv) {
-  const char* program_name = "mat_mul.cl";
   const char* kernel_name = "mat_mul";
 
   int n = 1000;

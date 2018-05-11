@@ -20,7 +20,6 @@ void fill_matrices(Matrix a, Matrix b, size_t m, size_t n) {
 }
 
 bool check(Matrix mat, size_t m, size_t n) {
-  bool success = true;
   for (size_t i = 0; i < m; i++) {
     for (size_t j = 0; j < n; j++) {
       if (mat[i * m + j] != i * j) return false;
