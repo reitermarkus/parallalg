@@ -32,11 +32,8 @@ LDFLAGS += $(OPENMP_FLAGS) $(OPENCL_FLAGS) -lm
 
 all: $(TARGETS)
 
-auto_level_seq: auto_level_seq.c
-	$(CC) $(CC_FLAGS) auto_level_seq.c -o auto_level_seq $(LDFLAGS)
-
-auto_level_ocl:
-	$(CC) $(CC_FLAGS) auto_level_ocl.c -o auto_level_ocl $(LDFLAGS)
+%: %.c
+	$(CC) $(CC_FLAGS) $^ -o $@ $(LDFLAGS)
 
 .PHONEY: clean
 clean:
