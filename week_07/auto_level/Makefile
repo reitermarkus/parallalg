@@ -1,8 +1,6 @@
 CC_FLAGS = -std=c11 -O3 -Wall -Werror -pedantic -I../../shared -D _POSIX_C_SOURCE=200809L
 OPENCL_FLAGS = -lOpenCL
 
-CFILES=$(wildcard */*.c)
-
 ifneq ($(OS), Windows_NT)
   OS ?= $(shell uname -s)
 endif
@@ -33,7 +31,7 @@ auto_level_seq: auto_level_seq.c
 	$(CC) $(CC_FLAGS) auto_level_seq.c -lm -o auto_level_seq -fopenmp
 
 auto_level_ocl:
-	$(CC) $(CC_FLAGS) $(CFILES) auto_level_ocl.c -lm -o auto_level_ocl $(OPENCL_FLAGS)
+	$(CC) $(CC_FLAGS) auto_level_ocl.c -lm -o auto_level_ocl $(OPENCL_FLAGS)
 
 .PHONEY: clean
 clean:
