@@ -1,3 +1,5 @@
+TARGETS = auto_level_seq auto_level_ocl
+
 CC_FLAGS = -std=c11 -O3 -Wall -Werror -pedantic -I../../shared -D _POSIX_C_SOURCE=200809L
 OPENCL_FLAGS = -lOpenCL
 OPENMP_FLAGS = -fopenmp
@@ -26,7 +28,7 @@ ifeq ($(OS), Linux)
   CC_FLAGS += -I$(OCL_HOME)/include -L$(OCL_HOME)/lib
 endif
 
-all: auto_level_seq auto_level_ocl
+all: $(TARGETS)
 
 auto_level_seq: auto_level_seq.c
 	$(CC) $(CC_FLAGS) auto_level_seq.c -lm -o auto_level_seq $(OPENMP_FLAGS)
@@ -36,7 +38,7 @@ auto_level_ocl:
 
 .PHONEY: clean
 clean:
-	$(RM) auto_level_seq auto_level_ocl
+	$(RM) $(TARGETS) *.o **/*.o
 
 earth-huge.png:
 	curl -L "http://www.astray.com/static/earth-huge.png" -O
