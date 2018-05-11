@@ -4,23 +4,27 @@ OPENCL_FLAGS = -lOpenCL
 CFILES=$(wildcard */*.c)
 
 ifneq ($(OS), Windows_NT)
-  ifeq ($(shell uname -s), Darwin)
-    ifeq ($(shell brew ls gcc@7 &>/dev/null; echo $$?), 0)
-      GCC_PREFIX = $(shell brew --prefix gcc@7)
-      CC = $(GCC_PREFIX)/bin/gcc-7
-      OPENCL_FLAGS = -framework OpenCL
-    else
-      $(error "GCC is not installed, run `brew install gcc@7`")
-    endif
+  OS ?= $(shell uname -s)
+endif
 
-    # Use dedicated GPU on MacBookPro.
-    ifneq (, $(findstring MacBookPro, $(shell /usr/sbin/ioreg -c IOPlatformExpertDevice -r -d 1)))
-      OPENCL_FLAGS += -DDEVICE_NUMBER=1
-    endif
-	else
-    OCL_HOME = /scratch/c703/c7031057/opencl
-    CC_FLAGS += -I$(OCL_HOME)/include -L$(OCL_HOME)/lib
+ifeq ($(OS), Darwin)
+  ifeq ($(shell brew ls gcc@7 &>/dev/null; echo $$?), 0)
+    GCC_PREFIX = $(shell brew --prefix gcc@7)
+    CC = $(GCC_PREFIX)/bin/gcc-7
+    OPENCL_FLAGS = -framework OpenCL
+  else
+    $(error "GCC is not installed, run `brew install gcc@7`")
   endif
+
+  # Use dedicated GPU on MacBookPro.
+  ifneq (, $(findstring MacBookPro, $(shell /usr/sbin/ioreg -c IOPlatformExpertDevice -r -d 1)))
+    OPENCL_FLAGS += -DDEVICE_NUMBER=1
+  endif
+endif
+
+ifeq ($(OS), Linux)
+  OCL_HOME = /scratch/c703/c7031057/opencl
+  CC_FLAGS += -I$(OCL_HOME)/include -L$(OCL_HOME)/lib
 endif
 
 all: auto_level_seq auto_level_ocl
