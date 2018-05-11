@@ -16,7 +16,7 @@
 if(__err != CL_SUCCESS) { \
 	fprintf(stderr, "OpenCL Assertion failure in %s#%d:\n", __FILE__, __LINE__); \
 	fprintf(stderr, "Error code: %s\n", cluErrorString(__err)); \
-	fprintf(stderr, ##__VA_ARGS__); \
+	fprintf(stderr, __VA_ARGS__); \
 	fprintf(stderr, "\n"); \
 	exit(-1); \
 }

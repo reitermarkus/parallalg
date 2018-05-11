@@ -9,11 +9,12 @@ endif
 ifeq ($(OS), Darwin)
   OPENCL_FLAGS = -framework OpenCL
 
-  ifeq ($(shell brew ls gcc@7 &>/dev/null; echo $$?), 0)
-    GCC_PREFIX = $(shell brew --prefix gcc@7)
-    CC = $(GCC_PREFIX)/bin/gcc-7
+  ifeq ($(shell brew ls llvm &>/dev/null; echo $$?), 0)
+    LLVM_PREFIX = $(shell brew --prefix llvm)
+    CC = $(LLVM_PREFIX)/bin/clang
+    CFLAGS += -I$(LLVM_PREFIX)/include -L$(LLVM_PREFIX)/lib
   else
-    $(error "GCC is not installed, run `brew install gcc@7`")
+    $(error "GCC is not installed, run `brew install llvm`")
   endif
 
   # Use dedicated GPU on MacBookPro.
