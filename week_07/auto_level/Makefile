@@ -1,4 +1,4 @@
-CC_FLAGS = -std=c11 -O3 -Werror -pedantic -I../../shared -D _POSIX_C_SOURCE=200809L
+CC_FLAGS = -std=c11 -O3 -Wall -Werror -pedantic -I../../shared -D _POSIX_C_SOURCE=200809L
 OPENCL_FLAGS = -lOpenCL
 
 CFILES=$(wildcard */*.c)

@@ -14,8 +14,8 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  const char const* input_file_name = argv[1];
-  const char const* output_file_name = argv[2];
+  const char* input_file_name = argv[1];
+  const char* output_file_name = argv[2];
 
   printf("Loading input file %s …\n", input_file_name);
   int width, height, components;

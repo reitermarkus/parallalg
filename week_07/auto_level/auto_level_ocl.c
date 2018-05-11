@@ -54,8 +54,8 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  const char const* input_file_name = argv[1];
-  const char const* output_file_name = argv[2];
+  const char* input_file_name = argv[1];
+  const char* output_file_name = argv[2];
 
   printf("Loading input file %s …\n", input_file_name);
   int width, height, components;
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
     average[c] = sum[c] / ((cl_ulong)width * (cl_ulong)height);
     minimum_factor[c] = (float)average[c] / ((float)average[c] - (float)minimum[c]);
     maximum_factor[c] = (255.0f - (float)average[c]) / ((float)maximum[c] - (float)average[c]);
-    printf("  Component %1u: %3lu / %3u / %3lu * %3.2f / %3.2f\n", c, minimum[c], average[c], maximum[c], minimum_factor[c], maximum_factor[c]);
+    printf("  Component %1u: %3lu / %3u / %3lu * %3.2f / %3.2f\n", c, (unsigned long)minimum[c], average[c], (unsigned long)maximum[c], minimum_factor[c], maximum_factor[c]);
   }
 
   cl_mem minimum_factor_buffer = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, components * sizeof(*minimum_factor), minimum_factor, &ret);
