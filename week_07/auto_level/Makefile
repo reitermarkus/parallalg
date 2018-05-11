@@ -28,13 +28,15 @@ ifeq ($(OS), Linux)
   CC_FLAGS += -I$(OCL_HOME)/include -L$(OCL_HOME)/lib
 endif
 
+LDFLAGS += $(OPENMP_FLAGS) $(OPENCL_FLAGS) -lm
+
 all: $(TARGETS)
 
 auto_level_seq: auto_level_seq.c
-	$(CC) $(CC_FLAGS) auto_level_seq.c -lm -o auto_level_seq $(OPENMP_FLAGS)
+	$(CC) $(CC_FLAGS) auto_level_seq.c -o auto_level_seq $(LDFLAGS)
 
 auto_level_ocl:
-	$(CC) $(CC_FLAGS) auto_level_ocl.c -lm -o auto_level_ocl $(OPENCL_FLAGS)
+	$(CC) $(CC_FLAGS) auto_level_ocl.c -o auto_level_ocl $(LDFLAGS)
 
 .PHONEY: clean
 clean:
