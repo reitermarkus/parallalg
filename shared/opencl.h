@@ -6,16 +6,8 @@
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #if __APPLE__
   #include <OpenCL/opencl.h>
-
-  #undef cl_command_queue_properties
-  #define cl_command_queue_properties cl_queue_properties_APPLE
-  #define clCreateCommandQueueWithProperties clCreateCommandQueueWithPropertiesAPPLE
 #else
   #include <CL/cl.h>
-
-  #ifndef clCreateCommandQueueWithProperties
-  #define clCreateCommandQueueWithProperties clCreateCommandQueue
-  #endif
 #endif
 
 #endif
