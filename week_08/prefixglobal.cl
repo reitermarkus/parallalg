@@ -38,11 +38,6 @@ kernel void update(global const ulong* input, global ulong* output, const ulong 
   output[global_id] = input[global_id];
 
   size_t group_id = get_group_id(0);
-
-  if (group_id == 0) {
-    return;
-  }
-
   size_t local_size = get_local_size(0);
 
   for (size_t i = 0; i < group_id; i++) {
