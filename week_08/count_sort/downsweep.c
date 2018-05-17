@@ -8,12 +8,23 @@
 #include "open_cl.h"
 #include "utils.h"
 
+void print_array(unsigned long* ary, int len) {
+  printf("[");
+
+  for(size_t i = 0; i < len; ++i) {
+    printf("%ld", ary[i]);
+    if (i != len - 1) { printf(", "); }
+  }
+
+  printf("]\n");
+}
+
 int main(int argc, char **argv) {
   srand(0);
 
   const char *program_name = "../downsweep.cl";
 
-  unsigned long n = 1024;
+  unsigned long n = 256;
 
   // 'parsing' optional input parameter = problem size
   if (argc > 1) {
@@ -23,10 +34,8 @@ int main(int argc, char **argv) {
   // init
   long *array = malloc(sizeof(long) * n);
 
-  long sum = 0;
   for (long i = 0; i < n; i++) {
-    array[i] = (rand() % 10);
-    sum += array[i];
+    array[i] = rand() % 10;
   }
 
   // ---------- compute ----------
@@ -40,7 +49,7 @@ int main(int argc, char **argv) {
   cl_command_queue command_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &ret);
 
   // ------------ Part B (data management) ------------ //
-  size_t vec_size = sizeof(long) * n;
+  size_t vec_size = sizeof(unsigned long) * n;
   cl_mem bytes = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for bytes");
   cl_mem result = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
@@ -63,9 +72,14 @@ int main(int argc, char **argv) {
 
   unsigned long length = n;
 
+  if (length > local_work_size) {
+    fprintf(stderr, "n cannot be larger than local work size.\n");
+    exit(1);
+  }
+
   cluSetKernelArguments(kernel, 4,
     sizeof(cl_mem), (void *)&bytes,
-    sizeof(unsigned long) * (length * 2), NULL,
+    sizeof(unsigned long) * (local_work_size * 2), NULL,
     sizeof(cl_mem), (void *)&result,
     sizeof(unsigned long), &length
   );
@@ -93,7 +107,10 @@ int main(int argc, char **argv) {
   timestamp end = now();
   printf("Total time: %.3f ms\n", (end - begin) * 1000);
 
-  printf("Sequential: %ld\n", sum);
+  printf("Input:  ");
+  print_array((unsigned long*)array, n);
+  printf("Output: ");
+  print_array((unsigned long*)output, n);
 
   // ---------- cleanup ----------
   // wait for completed operations (there should be none)
