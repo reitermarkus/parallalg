@@ -65,35 +65,34 @@ int main(int argc, char **argv) {
   size_t local_work_size = 8;
   size_t global_work_size = extend_to_multiple(n, local_work_size);
 
-  cl_kernel kernel = clCreateKernel(program, "prefix_sum", &ret);
-  CLU_ERRCHECK(ret, "Failed to create hillis and steele kernel from program");
+  cl_kernel prefix_sum_kernel = clCreateKernel(program, "prefix_sum", &ret);
+  CLU_ERRCHECK(ret, "Failed to create hillis and steele kernel.");
 
-  cluSetKernelArguments(kernel, 4,
+  cluSetKernelArguments(prefix_sum_kernel, 4,
     sizeof(cl_mem), (void *)&bytes,
     sizeof(unsigned long) * (local_work_size * 2), NULL,
     sizeof(cl_mem), (void *)&result,
     sizeof(unsigned long), &n
   );
 
-  cl_event profiling_event;
-  CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
-    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
+  CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, prefix_sum_kernel, 1,
+    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel");
 
+  cl_kernel update_kernel = clCreateKernel(program, "update", &ret);
+  CLU_ERRCHECK(ret, "Failed to create update kernel.");
 
-  // wait until event finishes
-  ret = clWaitForEvents(1, &profiling_event);
-  // get profiling data
-  cl_ulong event_start_time = (cl_ulong) 0;
-  cl_ulong event_end_time = (cl_ulong) 0;
-  ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, NULL);
-  ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, NULL);
+  cluSetKernelArguments(update_kernel, 3,
+    sizeof(cl_mem), (void *)&result,
+    sizeof(cl_mem), (void *)&bytes,
+    sizeof(unsigned long), &n
+  );
+
+  CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, update_kernel, 1,
+    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel");
 
   unsigned long* output = malloc(sizeof(unsigned long) * n);
-  CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, result,
+  CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, bytes,
     CL_TRUE, 0, sizeof(unsigned long) * n, output, 0, NULL, NULL), "Failed reading back result");
-
-  unsigned long kernel_total_time = (unsigned long)(event_end_time - event_start_time);
-  printf("Total Kernel Execution Time: %f ms\n", kernel_total_time * 1.0e-6);
 
   timestamp end = now();
   printf("Total time: %.3f ms\n", (end - begin) * 1000);
@@ -103,49 +102,15 @@ int main(int argc, char **argv) {
   printf("Output: ");
   print_array(output, n);
 
-  size_t aux_len = global_work_size / local_work_size;
-  unsigned long* aux = malloc(sizeof(unsigned long) * aux_len);
-
-  for(size_t i = 1; i < aux_len; i++) {
-    aux[i - 1] = output[(i * local_work_size) - 1];
-  }
-
-  aux[aux_len - 1] = output[n - 1];
-
-  printf("Aux: ");
-  print_array(aux, aux_len);
-
-  for(size_t i = aux_len - 1; i > 0; i--) {
-    aux[i] = aux[i - 1];
-  }
-
-  aux[0] = 0;
-
-  for(size_t i = 1; i < aux_len; i++) {
-    aux[i] += aux[i - 1];
-  }
-
-  printf("Aux Prefix Sum: ");
-  print_array(aux, aux_len);
-
-  for(size_t i = 1; i < aux_len; i++) {
-    for(size_t j = 0; j < local_work_size; j++) {
-      output[i * local_work_size + j] += aux[i];
-    }
-  }
-
-  printf("Final Output: ");
-  print_array(output, n);
-
   free(array);
-  free(aux);
   free(output);
 
   // ---------- cleanup ----------
   // wait for completed operations (there should be none)
   CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue");
   CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completion");
-  CLU_ERRCHECK(clReleaseKernel(kernel), "Failed to release kernel");
+  CLU_ERRCHECK(clReleaseKernel(prefix_sum_kernel), "Failed to release kernel");
+  CLU_ERRCHECK(clReleaseKernel(update_kernel), "Failed to release kernel");
   CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
 
   // free device memory
