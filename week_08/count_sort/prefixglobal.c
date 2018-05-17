@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 
   const char *program_name = "../prefixglobal.cl";
 
-  unsigned long n = 30;
+  unsigned long n = 256;
 
   // 'parsing' optional input parameter = problem size
   if (argc > 1) {
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
   unsigned long *array = malloc(sizeof(unsigned long) * n);
 
   for (size_t i = 0; i < n; i++) {
-    array[i] = 1;
+    array[i] = rand() % 10;
   }
 
   // ---------- compute ----------
@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
 
   // 11) schedule kernel
   size_t global_work_offset = 0;
-  size_t local_work_size = 8;
+  size_t local_work_size = 16;
   size_t global_work_size = extend_to_multiple(n, local_work_size);
 
   cl_kernel prefix_sum_kernel = clCreateKernel(program, "prefix_sum", &ret);
