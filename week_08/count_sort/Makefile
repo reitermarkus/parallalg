@@ -1,4 +1,4 @@
-TARGETS = list_gen
+TARGETS = list_gen hillissteele
 
 include ../../shared/shared.mk
 
