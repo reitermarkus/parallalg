@@ -6,8 +6,9 @@ build = "build.rs"
 
 [dependencies]
 libc = "0.2.0"
-rand = "0.4.2"
+rand = "0.5.0-pre.1"
 rayon = "1.0.1"
+ocl = "0.18.0"
 
 [build-dependencies]
 cc = "1.0.15"
@@ -19,3 +20,7 @@ path = "src/main_seq.rs"
 [[bin]]
 name = "main_par"
 path = "src/main_par.rs"
+
+[[bin]]
+name = "hillis_steele"
+path = "src/hillis_steele.rs"
