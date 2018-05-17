@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
 
   const char *program_name = "../hillissteele.cl";
 
-  unsigned long n = 1000;
+  unsigned long n = 1024;
 
   // 'parsing' optional input parameter = problem size
   if (argc > 1) {
@@ -23,8 +23,10 @@ int main(int argc, char **argv) {
   // init
   long *array = malloc(sizeof(long) * n);
 
+  long sum = 0;
   for (long i = 0; i < n; i++) {
-    array[i] = (rand() % 2);
+    array[i] = (rand() % 10);
+    sum += array[i];
   }
 
   // ---------- compute ----------
@@ -91,10 +93,10 @@ int main(int argc, char **argv) {
   timestamp end = now();
   printf("Total time: %.3f ms\n", (end - begin) * 1000);
 
+  printf("Sequential: %ld\n", sum);
+
+
   // ---------- cleanup ----------
-
-  // ------------ Part D (cleanup) ------------ //
-
   // wait for completed operations (there should be none)
   CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue");
   CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completion");
