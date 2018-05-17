@@ -1,4 +1,4 @@
-TARGETS = list_gen hillissteele
+TARGETS = list_gen hillissteele downsweep
 
 include ../../shared/shared.mk
 
