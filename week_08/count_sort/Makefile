@@ -1,4 +1,4 @@
-TARGETS = list_gen hillissteele downsweep
+TARGETS = list_gen hillissteele downsweep prefixglobal
 
 include ../../shared/shared.mk
 
