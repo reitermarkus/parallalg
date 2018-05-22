@@ -18,33 +18,28 @@ void count_sort(person_t *input, int size) {
     if (input[i].age > max)
       max = input[i].age;
   }
+  max++;
 
   // initialize count array of size max with 0's
-  int *count_arr = (int *)calloc(max + 1, sizeof(int));
+  int *count_arr = (int *)calloc(max, sizeof(int));
 
   // step 2) count occurences
   for (int i = 0; i < size; i++) {
     count_arr[input[i].age]++;
   }
 
-  // step 3) 
-  // for each element "e" in count_arr count number of entries which are in the input array and lower than "e"
-  for (int i = 0; i <= max; i++) {
-    int count = 0;
-    for (int j = 0; j < size; j++) {
-      if (input[j].age < i)
-        count++;
-    }
-    count_arr[i] = count;
+  // step 3) prefix sum
+  for (int i = 1; i < max; i++) {
+    count_arr[i] = count_arr[i] + count_arr[i-1];
   }
 
   // initialize a result array
   person_t *result = (person_t *)calloc(size, sizeof(person_t));
 
   // step 4) insert elements in right order into result array
-  for (int i = 0; i < size; i++) {
+  for (int i = size - 1; i >= 0; i--) {
     person_t p = input[i];
-    result[count_arr[p.age]++] = p;
+    result[(count_arr[p.age]--) - 1] = p;
   }
 
   memcpy(input, result, sizeof(person_t) * size);
