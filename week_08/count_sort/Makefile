@@ -1,4 +1,4 @@
-TARGETS = list_gen hillissteele downsweep prefixglobal
+TARGETS = list_gen hillissteele downsweep prefixglobal list_gen_ocl
 
 include ../../shared/shared.mk
 
@@ -15,3 +15,5 @@ run: all
 	@echo
 	@echo 'Prefix (global)'
 	@./prefixglobal
+	@echo 'list_gen_ocl'
+	@./list_gen_ocl
