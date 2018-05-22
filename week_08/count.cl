@@ -14,8 +14,4 @@ kernel void count(global const person_t *input, global int* count_array, const i
       count_array[global_id]++;
     }
   }
-  // barrier(CLK_LOCAL_MEM_FENCE);
-  // for(int i = 0; i < 10; i++) {
-  //   printf("%d\n", count_array[i]);
-  // }
 }
