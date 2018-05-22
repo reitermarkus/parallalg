@@ -108,9 +108,5 @@ int main(int argc, char **argv) {
 
   clWaitForEvents(1, &profiling_event);
 
-  for (int i = 0; i < max; i++) {
-    printf("%d ", count_array[i]);
-  }
-
   return EXIT_SUCCESS;
 }
