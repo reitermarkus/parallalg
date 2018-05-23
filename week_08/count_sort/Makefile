@@ -1,4 +1,4 @@
-TARGETS = list_gen hillissteele downsweep prefixglobal list_gen_ocl
+TARGETS = list_gen hillissteele downsweep prefixglobal countsort_bench
 
 include ../../shared/shared.mk
 
@@ -15,5 +15,5 @@ run: all
 	@echo
 	@echo 'Prefix (global)'
 	@./prefixglobal
-	@echo 'list_gen_ocl'
-	@./list_gen_ocl
+	@echo 'countsort_bench'
+	@./countsort_bench

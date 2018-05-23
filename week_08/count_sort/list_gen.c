@@ -39,7 +39,7 @@ void count_sort(person_t *input, int size) {
   // step 4) insert elements in right order into result array
   for (int i = size - 1; i >= 0; i--) {
     person_t p = input[i];
-    result[(count_arr[p.age]--) - 1] = p;
+    result[--count_arr[p.age]] = p;
   }
 
   memcpy(input, result, sizeof(person_t) * size);
