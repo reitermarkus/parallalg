@@ -6,12 +6,11 @@
 #include "stb/stb_image.h"
 #include "stb/stb_image_write.h"
 
-#include "utils.h"
-#include "open_cl.h"
 #include "cl_utils.h"
+#include "open_cl.h"
+#include "utils.h"
 
 void reduce(cl_command_queue command_queue, cl_program program, const char* kernel_name, int width, int height, int components, cl_mem input_image, cl_mem result, cl_ulong* output) {
-
   cl_int ret;
   cl_kernel kernel = clCreateKernel(program, kernel_name, &ret);
   CLU_ERRCHECK(ret, "Failed to create kernel from program.");
@@ -48,7 +47,7 @@ void reduce(cl_command_queue command_queue, cl_program program, const char* kern
   CLU_ERRCHECK(clReleaseKernel(kernel), "Failed to release kernel.");
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   if (argc != 3) {
     printf("Usage: auto_levels [inputfile] [outputfile]\nExample: %s test.png test_out.png\n", argv[0]);
     return EXIT_FAILURE;
@@ -59,14 +58,14 @@ int main(int argc, char **argv) {
 
   printf("Loading input file %s …\n", input_file_name);
   int width, height, components;
-  unsigned char *data = stbi_load(input_file_name, &width, &height, &components, 0);
+  unsigned char* data = stbi_load(input_file_name, &width, &height, &components, 0);
   printf("Loaded image of size %d×%d with %d components.\n", width, height, components);
 
   double start_time = now();
 
   cl_ulong* image = malloc(width * height * components * sizeof(*image));
 
-  for(size_t i = 0; i < width * height * components; i++) {
+  for (size_t i = 0; i < width * height * components; i++) {
     image[i] = (cl_ulong)data[i];
   }
 
@@ -163,7 +162,7 @@ int main(int argc, char **argv) {
   CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue.");
   CLU_ERRCHECK(clReleaseContext(context), "Failed to release OpenCL context.");
 
-  for(size_t i = 0; i < width * height * components; i++) {
+  for (size_t i = 0; i < width * height * components; i++) {
     data[i] = (unsigned char)image[i];
   }
 

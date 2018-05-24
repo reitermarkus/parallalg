@@ -3,8 +3,8 @@
 
 #include "utils.h"
 
-#include "matrix.h"
 #include "common/helpers.h"
+#include "matrix.h"
 
 int main(int argc, char** argv) {
   // 'parsing' optional input parameter = problem size
@@ -14,7 +14,6 @@ int main(int argc, char** argv) {
   }
   int T = N * 100;
   printf("Computing heat-distribution for room size N=%d for T=%d timesteps\n", N, T);
-
 
   // ---------- setup ----------
 
@@ -57,10 +56,10 @@ int main(int argc, char** argv) {
         value_t tc = A[i * N + j];
 
         // get temperatures left/right and up/down
-        value_t tl = (j !=  0 ) ? A[i * N + (j - 1)] : tc;
-        value_t tr = (j != N-1) ? A[i * N + (j + 1)] : tc;
-        value_t tu = (i !=  0 ) ? A[(i - 1) * N + j] : tc;
-        value_t td = (i != N-1) ? A[(i + 1) * N + j] : tc;
+        value_t tl = (j != 0) ? A[i * N + (j - 1)] : tc;
+        value_t tr = (j != N - 1) ? A[i * N + (j + 1)] : tc;
+        value_t tu = (i != 0) ? A[(i - 1) * N + j] : tc;
+        value_t td = (i != N - 1) ? A[(i + 1) * N + j] : tc;
 
         // update temperature at current point
         B[i * N + j] = tc + 0.2 * (tl + tr + tu + td + (-4 * tc));
@@ -92,7 +91,7 @@ int main(int argc, char** argv) {
   for (long long i = 0; i < N; i++) {
     for (long long j = 0; j < N; j++) {
       value_t temp = A[i * N + j];
-      if (273 <= temp && temp <= 273+60) continue;
+      if (273 <= temp && temp <= 273 + 60) continue;
       success = false;
       break;
     }

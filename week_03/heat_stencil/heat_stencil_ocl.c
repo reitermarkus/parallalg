@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "utils.h"
-#include "matrix.h"
-#include "common/helpers.h"
-#include "open_cl.h"
 #include "cl_utils.h"
+#include "common/helpers.h"
+#include "matrix.h"
+#include "open_cl.h"
+#include "utils.h"
 
 static const int dimension = 2;
 static unsigned long n = 500;
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
   ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, matrix_a, 0, NULL, NULL);
 
   kernel_code code = load_code(program_name);
-  cl_program program = clCreateProgramWithSource(context, 1, &code.code, (const size_t *)&code.size, &ret);
+  cl_program program = clCreateProgramWithSource(context, 1, &code.code, (const size_t*)&code.size, &ret);
 
   ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
 

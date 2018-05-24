@@ -1,6 +1,6 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <time.h>
 
 #include "cl_utils.h"
@@ -8,10 +8,10 @@
 #include "open_cl.h"
 #include "utils.h"
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   srand(0);
 
-  const char *program_name = "../kernel.cl";
+  const char* program_name = "../kernel.cl";
 
   unsigned long n = 1000000;
 
@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
   }
 
   // init
-  long *array = malloc(sizeof(long) * n);
+  long* array = malloc(sizeof(long) * n);
 
   for (long i = 0; i < n; i++) {
     array[i] = (rand() % 2);
@@ -69,10 +69,10 @@ int main(int argc, char **argv) {
     result_array_size = global_work_size / local_work_size;
 
     cluSetKernelArguments(kernel, 4,
-      sizeof(cl_mem), (void *)&bytes,
+      sizeof(cl_mem), (void*)&bytes,
       local_work_size * sizeof(long), NULL,
       sizeof(unsigned long), &length,
-      sizeof(cl_mem), (void *)&result
+      sizeof(cl_mem), (void*)&result
     );
 
     cl_event profiling_event;
@@ -81,13 +81,11 @@ int main(int argc, char **argv) {
 
     printf("Stage %ld: Reduced %ld values to %ld.\n", i, length, result_array_size);
 
-
-
     // wait until event finishes
     ret = clWaitForEvents(1, &profiling_event);
     // get profiling data
-    cl_ulong event_start_time = (cl_ulong) 0;
-    cl_ulong event_end_time = (cl_ulong) 0;
+    cl_ulong event_start_time = (cl_ulong)0;
+    cl_ulong event_end_time = (cl_ulong)0;
     ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, NULL);
     ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, NULL);
 
@@ -111,7 +109,6 @@ int main(int argc, char **argv) {
 
 
   printf("Total Kernel Execution Time: %f ms\n", kernel_total_time * 1.0e-6);
-
 
   printf("Count: %ld\n", count);
 

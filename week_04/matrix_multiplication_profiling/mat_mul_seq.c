@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "utils.h"
 #include "matrix.h"
+#include "utils.h"
 
 int main(int argc, char** argv) {
   int n = 1000;

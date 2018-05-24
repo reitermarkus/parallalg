@@ -69,9 +69,9 @@ int main(int argc, char** argv) {
   CLU_ERRCHECK(ret, "Failed to create hillis and steele kernel.");
 
   cluSetKernelArguments(prefix_sum_kernel, 4,
-    sizeof(cl_mem), (void *)&bytes,
+    sizeof(cl_mem), (void*)&bytes,
     sizeof(unsigned long) * (local_work_size * 2), NULL,
-    sizeof(cl_mem), (void *)&result,
+    sizeof(cl_mem), (void*)&result,
     sizeof(unsigned long), &n
   );
 
@@ -82,8 +82,8 @@ int main(int argc, char** argv) {
   CLU_ERRCHECK(ret, "Failed to create update kernel.");
 
   cluSetKernelArguments(update_kernel, 3,
-    sizeof(cl_mem), (void *)&result,
-    sizeof(cl_mem), (void *)&bytes,
+    sizeof(cl_mem), (void*)&result,
+    sizeof(cl_mem), (void*)&bytes,
     sizeof(unsigned long), &n
   );
 

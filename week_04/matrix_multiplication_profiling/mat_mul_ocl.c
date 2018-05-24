@@ -1,8 +1,8 @@
 #include <stdio.h>
-#include "utils.h"
+#include "cl_utils.h"
 #include "matrix.h"
 #include "open_cl.h"
-#include "cl_utils.h"
+#include "utils.h"
 
 static int dimension = 2;
 
@@ -21,8 +21,8 @@ void print_profiling_info(const char* event_description) {
   // wait until event finishes
   clWaitForEvents(1, &profiling_event);
   // get profiling data
-  cl_ulong event_start_time = (cl_ulong) 0;
-  cl_ulong event_end_time = (cl_ulong) 0;
+  cl_ulong event_start_time = (cl_ulong)0;
+  cl_ulong event_end_time = (cl_ulong)0;
   clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, &ev_return_bytes);
   clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, &ev_return_bytes);
 
@@ -63,9 +63,9 @@ int main(int argc, char** argv) {
   // ------------ Part B (data management) ------------ //
 
   vec_size = sizeof(value_t) * n * n;
-  dev_vec_a   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
+  dev_vec_a = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for matrix A");
-  dev_vec_b   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
+  dev_vec_b = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for matrix B");
   dev_vec_res = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, vec_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for matrix C");
@@ -94,9 +94,9 @@ int main(int argc, char** argv) {
   CLU_ERRCHECK(ret, "Failed to create mat_mul kernel from program");
 
   cluSetKernelArguments(kernel, 4,
-    sizeof(cl_mem), (void *)&dev_vec_res,
-    sizeof(cl_mem), (void *)&dev_vec_a,
-    sizeof(cl_mem), (void *)&dev_vec_b,
+    sizeof(cl_mem), (void*)&dev_vec_res,
+    sizeof(cl_mem), (void*)&dev_vec_a,
+    sizeof(cl_mem), (void*)&dev_vec_b,
     sizeof(n), &n
   );
 
@@ -119,9 +119,9 @@ int main(int argc, char** argv) {
   // ------------ Part D (cleanup) ------------ //
 
   // wait for completed operations (there should be none)
-  CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
-  CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
-  CLU_ERRCHECK(clReleaseKernel(kernel),   "Failed to release kernel");
+  CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue");
+  CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completion");
+  CLU_ERRCHECK(clReleaseKernel(kernel), "Failed to release kernel");
   CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
 
   // free device memory
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
 
   // free management resources
   CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
-  CLU_ERRCHECK(clReleaseContext(context),            "Failed to release OpenCL context");
+  CLU_ERRCHECK(clReleaseContext(context), "Failed to release OpenCL context");
 
   timestamp end = now();
   // -------------------- END -------------------- //

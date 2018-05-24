@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "utils.h"
-#include "matrix.h"
-#include "common/helpers.h"
-#include "open_cl.h"
 #include "cl_utils.h"
+#include "common/helpers.h"
+#include "matrix.h"
+#include "open_cl.h"
+#include "utils.h"
 
 static const int dimension = 2;
 static unsigned long n = 500;
@@ -136,9 +136,9 @@ int main(int argc, char** argv) {
   // ------------ Part D (cleanup) ------------ //
 
   // wait for completed operations (there should be none)
-  CLU_ERRCHECK(clFlush(command_queue),    "Failed to flush command queue");
-  CLU_ERRCHECK(clFinish(command_queue),   "Failed to wait for command queue completion");
-  CLU_ERRCHECK(clReleaseKernel(kernel),   "Failed to release kernel");
+  CLU_ERRCHECK(clFlush(command_queue), "Failed to flush command queue");
+  CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completion");
+  CLU_ERRCHECK(clReleaseKernel(kernel), "Failed to release kernel");
   CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
 
   // free device memory
@@ -147,7 +147,7 @@ int main(int argc, char** argv) {
 
   // free management resources
   CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
-  CLU_ERRCHECK(clReleaseContext(context),            "Failed to release OpenCL context");
+  CLU_ERRCHECK(clReleaseContext(context), "Failed to release OpenCL context");
 
   free(matrix_a);
 

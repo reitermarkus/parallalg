@@ -8,7 +8,7 @@
 
 #include "utils.h"
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   if (argc != 3) {
     printf("Usage: auto_levels [inputfile] [outputfile]\nExample: %s test.png test_out.png\n", argv[0]);
     return EXIT_FAILURE;
@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
 
   printf("Loading input file %s …\n", input_file_name);
   int width, height, components;
-  unsigned char *data = stbi_load(input_file_name, &width, &height, &components, 0);
+  unsigned char* data = stbi_load(input_file_name, &width, &height, &components, 0);
   printf("Loaded image of size %d×%d with %d components.\n", width, height, components);
 
   double start_time = now();

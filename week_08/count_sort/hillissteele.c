@@ -78,9 +78,9 @@ int main(int argc, char** argv) {
   }
 
   cluSetKernelArguments(kernel, 4,
-    sizeof(cl_mem), (void *)&bytes,
+    sizeof(cl_mem), (void*)&bytes,
     sizeof(unsigned long) * (local_work_size * 2), NULL,
-    sizeof(cl_mem), (void *)&result,
+    sizeof(cl_mem), (void*)&result,
     sizeof(unsigned long), &length
   );
 
@@ -92,8 +92,8 @@ int main(int argc, char** argv) {
   // wait until event finishes
   ret = clWaitForEvents(1, &profiling_event);
   // get profiling data
-  cl_ulong event_start_time = (cl_ulong) 0;
-  cl_ulong event_end_time = (cl_ulong) 0;
+  cl_ulong event_start_time = (cl_ulong)0;
+  cl_ulong event_end_time = (cl_ulong)0;
   ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, NULL);
   ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, NULL);
 
@@ -111,7 +111,6 @@ int main(int argc, char** argv) {
   print_array((unsigned long*)array, n);
   printf("Output: ");
   print_array((unsigned long*)output, n);
-
 
   // ---------- cleanup ----------
   // wait for completed operations (there should be none)

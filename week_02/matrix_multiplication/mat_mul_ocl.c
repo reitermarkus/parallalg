@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include "utils.h"
 #include "matrix.h"
 #include "open_cl.h"
+#include "utils.h"
 
 static int dimension = 2;
 
@@ -51,15 +51,15 @@ int main(int argc, char** argv) {
   // ------------ Part B (data management) ------------ //
 
   vec_size = sizeof(value_t) * n * n;
-  dev_vec_a   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
-  dev_vec_b   = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
+  dev_vec_a = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
+  dev_vec_b = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, vec_size, NULL, &ret);
   dev_vec_res = clCreateBuffer(context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, vec_size, NULL, &ret);
 
   ret = clEnqueueWriteBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, mtx_a, 0, NULL, NULL);
   ret = clEnqueueWriteBuffer(command_queue, dev_vec_b, CL_TRUE, 0, vec_size, mtx_b, 0, NULL, NULL);
 
   kernel_code code = load_code("mat_mul.cl");
-  cl_program program = clCreateProgramWithSource(context, 1, &code.code, (const size_t *)&code.size, &ret);
+  cl_program program = clCreateProgramWithSource(context, 1, &code.code, (const size_t*)&code.size, &ret);
 
   ret = clBuildProgram(program, 1, &device_id, NULL, NULL, NULL);
 
@@ -73,7 +73,6 @@ int main(int argc, char** argv) {
     printf("Build Error:\n%s", msg);
     exit(1);
   }
-
 
   cl_kernel kernel = clCreateKernel(program, kernel_name, &ret);
   ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), &dev_vec_res);

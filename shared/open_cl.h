@@ -26,7 +26,7 @@ kernel_code load_code(const char* filename) {
 
   char* code = (char*)calloc(size + 1, sizeof(char));
 
-  if(fread(code, sizeof(char), size, fp) == 0) {
+  if (fread(code, sizeof(char), size, fp) == 0) {
     perror("fread");
     exit(EXIT_FAILURE);
   }

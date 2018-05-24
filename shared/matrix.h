@@ -13,7 +13,7 @@ Matrix create_matrix(size_t m, size_t n) {
 void fill_matrices(Matrix a, Matrix b, size_t m, size_t n) {
   for (size_t i = 0; i < n; i++) {
     for (size_t j = 0; j < n; j++) {
-      a[i * m + j] = i * j; // some matrix - note: flattened indexing!
+      a[i * m + j] = i * j;            // some matrix - note: flattened indexing!
       b[i * m + j] = (i == j) ? 1 : 0; // identity matrix
     }
   }
