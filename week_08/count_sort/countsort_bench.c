@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
   );
 
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, prefix_sum_kernel, 1,
-    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel");
+    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
   kernel_total_time += update_kernel_time(profiling_event);
 
   cl_kernel update_kernel = clCreateKernel(prefix_sum_program, "update", &ret);
@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
   );
 
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, update_kernel, 1,
-    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel");
+    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
   kernel_total_time += update_kernel_time(profiling_event);
 
   // ------------------ STEP 3) insert in right order ----------------- //
