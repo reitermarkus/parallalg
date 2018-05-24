@@ -1,6 +1,6 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <time.h>
 
 #include "cl_utils.h"
@@ -11,7 +11,7 @@
 void print_array(unsigned long* ary, int len) {
   printf("[");
 
-  for(size_t i = 0; i < len; ++i) {
+  for (size_t i = 0; i < len; i++) {
     printf("%ld", ary[i]);
     if (i != len - 1) { printf(", "); }
   }
@@ -19,10 +19,10 @@ void print_array(unsigned long* ary, int len) {
   printf("]\n");
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   srand(0);
 
-  const char *program_name = "../prefixglobal.cl";
+  const char* program_name = "../prefixglobal.cl";
 
   unsigned long n = 256;
 
@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
   }
 
   // init
-  unsigned long *array = malloc(sizeof(unsigned long) * n);
+  unsigned long* array = malloc(sizeof(unsigned long) * n);
 
   for (size_t i = 0; i < n; i++) {
     array[i] = rand() % 10;

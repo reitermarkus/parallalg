@@ -7,8 +7,8 @@
 static char** first_names = NULL;
 static char** last_names = NULL;
 
-char** load_names(const char *filename, size_t* lines) {
-  FILE *file = fopen(filename, "r");
+char** load_names(const char* filename, size_t* lines) {
+  FILE* file = fopen(filename, "r");
 
   fseek(file, 0, SEEK_END);
   size_t size = ftell(file);
@@ -16,7 +16,7 @@ char** load_names(const char *filename, size_t* lines) {
 
   char* content = malloc((size + 1) * sizeof(char));
 
-  if(fread(content, sizeof(char), size, file) == 0) {
+  if (fread(content, sizeof(char), size, file) == 0) {
     perror("fread");
     exit(EXIT_FAILURE);
   }
@@ -41,7 +41,7 @@ char* gen_name() {
   }
 
   if (last_names == NULL) {
-    last_names = load_names(LAST_NAMES_FILE,  &last_name_count);
+    last_names = load_names(LAST_NAMES_FILE, &last_name_count);
   }
 
   static name_t buffer;

@@ -4,13 +4,13 @@
 #include "people.h"
 #include "tokenize.h"
 
-void print_list(person_t *list, int size) {
+void print_list(person_t* list, int size) {
   for (int i = 0; i < size; i++) {
     printf("[%d]\tName: %s\tAge: %d\n", i + 1, list[i].name, list[i].age);
   }
 }
 
-void count_sort(person_t *input, int size) {
+void count_sort(person_t* input, int size) {
   int max = 0;
 
   // step 1) find highest number
@@ -21,7 +21,7 @@ void count_sort(person_t *input, int size) {
   max++;
 
   // initialize count array of size max with 0's
-  int *count_arr = calloc(max, sizeof(int));
+  int* count_arr = calloc(max, sizeof(int));
 
   // step 2) count occurences
   for (int i = 0; i < size; i++) {
@@ -30,11 +30,11 @@ void count_sort(person_t *input, int size) {
 
   // step 3) prefix sum
   for (int i = 1; i < max; i++) {
-    count_arr[i] = count_arr[i] + count_arr[i-1];
+    count_arr[i] = count_arr[i] + count_arr[i - 1];
   }
 
   // initialize a result array
-  person_t *result = calloc(size, sizeof(person_t));
+  person_t* result = calloc(size, sizeof(person_t));
 
   // step 4) insert elements in right order into result array
   for (int i = size - 1; i >= 0; i--) {
@@ -47,7 +47,7 @@ void count_sort(person_t *input, int size) {
   free(count_arr);
 }
 
-void create_person_list(person_t *persons, int n) {
+void create_person_list(person_t* persons, int n) {
   person_t p;
 
   for (int i = 0; i < n; i++) {
@@ -57,7 +57,7 @@ void create_person_list(person_t *persons, int n) {
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   int size = 10;
   int seed = 1;
 
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
   srand(seed);
   printf("Generating list of size %d with seed %d\n\n", size, seed);
 
-  person_t *list = malloc(size * sizeof(person_t));
+  person_t* list = malloc(size * sizeof(person_t));
   create_person_list(list, size);
 
   puts("Unsorted:");

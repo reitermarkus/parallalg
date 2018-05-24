@@ -6,17 +6,17 @@
 #include "cl_utils.h"
 #include "matrix.h"
 #include "open_cl.h"
-#include "utils.h"
 #include "people.h"
 #include "tokenize.h"
+#include "utils.h"
 
-void print_list(person_t *list, int size) {
+void print_list(person_t* list, int size) {
   for (int i = 0; i < size; i++) {
     printf("[%d]\tName: %s\tAge: %d\n", i + 1, list[i].name, list[i].age);
   }
 }
 
-void create_person_list(person_t *persons, int n) {
+void create_person_list(person_t* persons, int n) {
   person_t p;
 
   for (int i = 0; i < n; i++) {
@@ -26,7 +26,7 @@ void create_person_list(person_t *persons, int n) {
   }
 }
 
-void count_sort(person_t *list, int size) {
+void count_sort(person_t* list, int size) {
   int max = 0;
 
   // step 1) find highest number
@@ -38,7 +38,7 @@ void count_sort(person_t *list, int size) {
   max++;
 
   // initialize count array of size max with 0's
-  int *count_arr = calloc(max, sizeof(int));
+  int* count_arr = calloc(max, sizeof(int));
 
   // step 2) count occurences
   for (int i = 0; i < size; i++) {
@@ -47,11 +47,11 @@ void count_sort(person_t *list, int size) {
 
   // step 3) prefix sum
   for (int i = 1; i < max; i++) {
-    count_arr[i] = count_arr[i] + count_arr[i-1];
+    count_arr[i] = count_arr[i] + count_arr[i - 1];
   }
 
   // initialize a result array
-  person_t *result = calloc(size, sizeof(person_t));
+  person_t* result = calloc(size, sizeof(person_t));
 
   // step 4) insert elements in right order into result array
   for (int i = size - 1; i >= 0; i--) {
@@ -68,18 +68,18 @@ unsigned long update_kernel_time(cl_event profiling_event) {
   // wait until event finishes
   clWaitForEvents(1, &profiling_event);
   // get profiling data
-  cl_ulong event_start_time = (cl_ulong) 0;
-  cl_ulong event_end_time = (cl_ulong) 0;
+  cl_ulong event_start_time = (cl_ulong)0;
+  cl_ulong event_end_time = (cl_ulong)0;
   clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, NULL);
   clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, NULL);
 
-  return (unsigned long) (event_end_time - event_start_time);
+  return (unsigned long)(event_end_time - event_start_time);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   int size = 10;
   int seed = 1;
-  const char *program_name = "../count_sort.cl";
+  const char* program_name = "../count_sort.cl";
 
   if (argc > 2) {
     size = atoi(argv[1]);
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
   srand(seed);
   printf("Generating list of size %d with seed %d\n\n", size, seed);
 
-  person_t *list = malloc(size * sizeof(person_t));
+  person_t* list = malloc(size * sizeof(person_t));
   create_person_list(list, size);
 
   // ---------------------- SEQUENTIAL ---------------------- //
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
   CLU_ERRCHECK(ret, "Failed to write list_buffer to device");
 
   cl_event profiling_event;
-  cl_ulong kernel_total_time = (cl_ulong) 0;
+  cl_ulong kernel_total_time = (cl_ulong)0;
 
   // ------------------- STEP 0) find highest number ------------------- //
   begin = now();
@@ -125,13 +125,12 @@ int main(int argc, char **argv) {
   unsigned long time_of_max = now() - begin;
 
   // initialize count array of size max with 0's
-  int *count_array = calloc(max, sizeof(int));
+  int* count_array = calloc(max, sizeof(int));
 
   cl_mem count_array_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(int) * max, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for count_array_mem");
   ret = clEnqueueWriteBuffer(command_queue, count_array_mem, CL_TRUE, 0, sizeof(int) * max, count_array, 0, NULL, NULL);
   CLU_ERRCHECK(ret, "Failed to write count_array_mem to device");
-
 
   // -------------------- STEP 1) count occurences -------------------- //
   cl_program program = cluBuildProgramFromFile(context, device_id, program_name, NULL);
@@ -157,7 +156,7 @@ int main(int argc, char **argv) {
 
   // ----------------------- STEP 2) prefix sum ----------------------- //
   for (int i = 1; i < max; i++) {
-    count_array[i] = count_array[i] + count_array[i-1];
+    count_array[i] = count_array[i] + count_array[i - 1];
   }
 
   // ------------------ STEP 3) insert in right order ----------------- //
