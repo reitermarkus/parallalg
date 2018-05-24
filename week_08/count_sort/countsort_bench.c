@@ -57,8 +57,9 @@ void count_sort(person_t* list, int size) {
   person_t* result = calloc(size, sizeof(person_t));
 
   // step 4) insert elements in right order into result array
-  for (int i = 0; i < size; i++) {
-    result[count_arr[list[i].age]++] = list[i];
+  for (int i = size - 1; i >= 0; i--) {
+    person_t p = list[i];
+    result[--count_arr[p.age]] = p;
   }
 
   memcpy(list, result, sizeof(person_t) * size);
@@ -100,7 +101,7 @@ int main(int argc, char** argv) {
 
   // ---------------------- SEQUENTIAL ---------------------- //
   timestamp begin = now();
-  // count_sort(list, size);
+  count_sort(list, size);
   printf("Sequential sort time:\t%.3f ms\n", (now() - begin) * 1000);
 
   create_person_list(list, size, seed);
