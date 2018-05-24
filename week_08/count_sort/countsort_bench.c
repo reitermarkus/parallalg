@@ -77,7 +77,7 @@ unsigned long update_kernel_time(cl_event profiling_event) {
 }
 
 int main(int argc, char** argv) {
-  int size = 10;
+  unsigned long size = 10;
   int seed = 1;
   const char* program_name = "../count_sort.cl";
 
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
   }
 
   srand(seed);
-  printf("Generating list of size %d with seed %d\n\n", size, seed);
+  printf("Generating list of size %ld with seed %d\n\n", size, seed);
 
   person_t* list = malloc(size * sizeof(person_t));
   create_person_list(list, size);
@@ -125,11 +125,11 @@ int main(int argc, char** argv) {
   unsigned long time_of_max = now() - begin;
 
   // initialize count array of size max with 0's
-  int* count_array = calloc(max, sizeof(int));
+  unsigned long* count_array = calloc(max, sizeof( unsigned long));
 
-  cl_mem count_array_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(int) * max, NULL, &ret);
+  cl_mem count_array_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof( unsigned long) * max, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for count_array_mem");
-  ret = clEnqueueWriteBuffer(command_queue, count_array_mem, CL_TRUE, 0, sizeof(int) * max, count_array, 0, NULL, NULL);
+  ret = clEnqueueWriteBuffer(command_queue, count_array_mem, CL_TRUE, 0, sizeof( unsigned long) * max, count_array, 0, NULL, NULL);
   CLU_ERRCHECK(ret, "Failed to write count_array_mem to device");
 
   // -------------------- STEP 1) count occurences -------------------- //
@@ -144,7 +144,7 @@ int main(int argc, char** argv) {
   cluSetKernelArguments(count_kernel, 3,
     sizeof(cl_mem), (void *)&list_buffer,
     sizeof(cl_mem), (void *)&count_array_mem,
-    sizeof(int), &size
+    sizeof(unsigned long), &size
   );
 
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, count_kernel, 1,
@@ -170,10 +170,10 @@ int main(int argc, char** argv) {
     sizeof(cl_mem), (void *)&list_buffer,
     sizeof(cl_mem), (void *)&count_array_mem,
     sizeof(cl_mem), (void *)&result_mem,
-    sizeof(int), &size
+    sizeof(unsigned long), &size
   );
 
-  ret = clEnqueueWriteBuffer(command_queue, count_array_mem, CL_TRUE, 0, sizeof(int) * max, count_array, 0, NULL, NULL);
+  ret = clEnqueueWriteBuffer(command_queue, count_array_mem, CL_TRUE, 0, sizeof(unsigned long) * max, count_array, 0, NULL, NULL);
   CLU_ERRCHECK(ret, "Failed to write count_array_mem to device");
 
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, insert_kernel, 1,

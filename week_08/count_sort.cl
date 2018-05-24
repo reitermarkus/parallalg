@@ -5,7 +5,7 @@ typedef struct {
 	name_t name;
 } person_t;
 
-kernel void count(global const person_t* input, global int* count_array, const int size) {
+kernel void count(global const person_t* input, global ulong* count_array, const ulong size) {
   size_t global_id = get_global_id(0);
 
   for (int i = 0; i < size; i++) {
@@ -15,7 +15,7 @@ kernel void count(global const person_t* input, global int* count_array, const i
   }
 }
 
-kernel void insert(global const person_t* input, global int* count_array, global person_t* result, const int size) {
+kernel void insert(global const person_t* input, global ulong* count_array, global person_t* result, const ulong size) {
   size_t global_id = get_global_id(0);
 
 	for(int i = size - 1; i >= 0; i--) {
