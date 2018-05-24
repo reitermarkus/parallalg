@@ -27,13 +27,6 @@ char** load_names(const char* filename, size_t* lines) {
 }
 
 char* gen_name() {
-  static bool seeded = false;
-
-  if (!seeded) {
-    srand(time(0));
-    seeded = true;
-  }
-
   static size_t first_name_count, last_name_count;
 
   if (first_names == NULL) {
