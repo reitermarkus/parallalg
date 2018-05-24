@@ -81,8 +81,11 @@ int main(int argc, char** argv) {
   int seed = 1;
   const char* program_name = "../count_sort.cl";
 
-  if (argc > 2) {
+  if (argc > 1) {
     size = atoi(argv[1]);
+  }
+
+  if (argc > 2) {
     seed = atoi(argv[2]);
   }
 
