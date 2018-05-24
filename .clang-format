@@ -1,0 +1,9 @@
+BasedOnStyle: Chromium
+ColumnLimit: 0
+IndentWidth: 2
+SpacesBeforeTrailingComments: 1
+AllowShortIfStatementsOnASingleLine: true
+AlignAfterOpenBracket: DontAlign
+ContinuationIndentWidth: 2
+AllowShortBlocksOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
