@@ -16,8 +16,10 @@ void print_list(person_t* list, int size) {
   }
 }
 
-void create_person_list(person_t* persons, int n) {
+void create_person_list(person_t* persons, int n, int seed) {
   person_t p;
+
+  srand(seed);
 
   for (int i = 0; i < n; i++) {
     p.age = rand() % MAX_AGE;
@@ -37,6 +39,7 @@ void count_sort(person_t* list, int size) {
 
   max++;
 
+
   // initialize count array of size max with 0's
   int* count_arr = calloc(max, sizeof(int));
 
@@ -54,9 +57,8 @@ void count_sort(person_t* list, int size) {
   person_t* result = calloc(size, sizeof(person_t));
 
   // step 4) insert elements in right order into result array
-  for (int i = size - 1; i >= 0; i--) {
-    person_t p = list[i];
-    result[--count_arr[p.age]] = p;
+  for (int i = 0; i < size; i++) {
+    result[count_arr[list[i].age]++] = list[i];
   }
 
   memcpy(list, result, sizeof(person_t) * size);
@@ -90,16 +92,18 @@ int main(int argc, char** argv) {
     seed = atoi(argv[2]);
   }
 
-  srand(seed);
   printf("Generating list of size %ld with seed %d\n\n", size, seed);
 
   person_t* list = malloc(size * sizeof(person_t));
-  create_person_list(list, size);
+
+  create_person_list(list, size, seed);
 
   // ---------------------- SEQUENTIAL ---------------------- //
   timestamp begin = now();
-  count_sort(list, size);
+  // count_sort(list, size);
   printf("Sequential sort time:\t%.3f ms\n", (now() - begin) * 1000);
+
+  create_person_list(list, size, seed);
 
   // ----------------------- PARALLEL ----------------------- //
   cl_int ret;
@@ -117,16 +121,13 @@ int main(int argc, char** argv) {
   cl_event profiling_event;
   cl_ulong kernel_total_time = (cl_ulong)0;
 
-  int max = MAX_AGE;
+  unsigned long max = MAX_AGE;
   max++;
 
   // initialize count array of size max with 0's
-  unsigned long* count_array = calloc(max, sizeof( unsigned long));
 
   cl_mem count_array_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned long) * max, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for count_array_mem");
-  ret = clEnqueueWriteBuffer(command_queue, count_array_mem, CL_TRUE, 0, sizeof( unsigned long) * max, count_array, 0, NULL, NULL);
-  CLU_ERRCHECK(ret, "Failed to write count_array_mem to device");
 
   // -------------------- STEP 1) count occurences -------------------- //
   cl_program count_sort_program = cluBuildProgramFromFile(context, device_id, count_sort_program_name, NULL);
@@ -138,9 +139,10 @@ int main(int argc, char** argv) {
   cl_kernel count_kernel = clCreateKernel(count_sort_program, "count", &ret);
   CLU_ERRCHECK(ret, "Failed to create count_kernel kernel from count_sort_program");
 
-  cluSetKernelArguments(count_kernel, 3,
+  cluSetKernelArguments(count_kernel, 4,
     sizeof(cl_mem), (void*)&list_buffer,
     sizeof(cl_mem), (void*)&count_array_mem,
+    sizeof(unsigned long), &max,
     sizeof(unsigned long), &size
   );
 
@@ -154,11 +156,14 @@ int main(int argc, char** argv) {
   cl_kernel prefix_sum_kernel = clCreateKernel(prefix_sum_program, "prefix_sum", &ret);
   CLU_ERRCHECK(ret, "Failed to create hillis and steele kernel.");
 
+
+  global_work_size = extend_to_multiple(max, local_work_size);
+
   cluSetKernelArguments(prefix_sum_kernel, 4,
     sizeof(cl_mem), (void*)&count_array_mem,
     sizeof(unsigned long) * (local_work_size * 2), NULL,
     sizeof(cl_mem), (void*)&count_array_prefix_mem,
-    sizeof(unsigned long), &size
+    sizeof(unsigned long), &max
   );
 
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, prefix_sum_kernel, 1,
@@ -171,7 +176,7 @@ int main(int argc, char** argv) {
   cluSetKernelArguments(update_kernel, 3,
     sizeof(cl_mem), (void*)&count_array_prefix_mem,
     sizeof(cl_mem), (void*)&count_array_mem,
-    sizeof(unsigned long), &size
+    sizeof(unsigned long), &max
   );
 
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, update_kernel, 1,
@@ -184,6 +189,8 @@ int main(int argc, char** argv) {
 
   cl_kernel insert_kernel = clCreateKernel(count_sort_program, "insert", &ret);
   CLU_ERRCHECK(ret, "Failed to create insert_kernel kernel from count_sort_program");
+
+  global_work_size = extend_to_multiple(size, local_work_size);
 
   cluSetKernelArguments(insert_kernel, 4,
     sizeof(cl_mem), (void*)&list_buffer,
@@ -219,7 +226,6 @@ int main(int argc, char** argv) {
   CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
   CLU_ERRCHECK(clReleaseContext(context), "Failed to release OpenCL context");
 
-  free(count_array);
   free(list);
 
   return EXIT_SUCCESS;
