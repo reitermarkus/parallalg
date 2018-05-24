@@ -117,16 +117,8 @@ int main(int argc, char** argv) {
   cl_event profiling_event;
   cl_ulong kernel_total_time = (cl_ulong)0;
 
-  // ------------------- STEP 0) find highest number ------------------- //
-  begin = now();
-  int max = 0;
-  for (int i = 0; i < size; i++) {
-    if (list[i].age > max)
-      max = list[i].age;
-  }
-
+  int max = MAX_AGE;
   max++;
-  unsigned long time_of_max = now() - begin;
 
   // initialize count array of size max with 0's
   unsigned long* count_array = calloc(max, sizeof( unsigned long));
@@ -164,13 +156,14 @@ int main(int argc, char** argv) {
 
   cluSetKernelArguments(prefix_sum_kernel, 4,
     sizeof(cl_mem), (void*)&count_array_mem,
-    sizeof(unsigned long) * max, NULL,
+    sizeof(unsigned long) * (local_work_size * 2), NULL,
     sizeof(cl_mem), (void*)&count_array_prefix_mem,
     sizeof(unsigned long), &size
   );
 
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, prefix_sum_kernel, 1,
     &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel");
+  kernel_total_time += update_kernel_time(profiling_event);
 
   cl_kernel update_kernel = clCreateKernel(prefix_sum_program, "update", &ret);
   CLU_ERRCHECK(ret, "Failed to create update kernel.");
@@ -183,6 +176,7 @@ int main(int argc, char** argv) {
 
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, update_kernel, 1,
     &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel");
+  kernel_total_time += update_kernel_time(profiling_event);
 
   // ------------------ STEP 3) insert in right order ----------------- //
   cl_mem result_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, list_size, NULL, &ret);
@@ -205,7 +199,6 @@ int main(int argc, char** argv) {
   CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, result_mem,
     CL_TRUE, 0, list_size, list, 0, NULL, NULL), "Failed reading back result");
 
-  kernel_total_time += time_of_max;
   printf("Parallel sort time:\t%f ms\n", (unsigned long) kernel_total_time * 1.0e-6);
 
   // ------------------- CLEAN UP ------------------- //
