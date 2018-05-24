@@ -79,7 +79,8 @@ unsigned long update_kernel_time(cl_event profiling_event) {
 int main(int argc, char** argv) {
   unsigned long size = 10;
   int seed = 1;
-  const char* program_name = "../count_sort.cl";
+  const char* count_sort_program_name = "../count_sort.cl";
+  const char* prefix_sum_program_name = "../prefixglobal.cl";
 
   if (argc > 1) {
     size = atoi(argv[1]);
@@ -130,23 +131,24 @@ int main(int argc, char** argv) {
   // initialize count array of size max with 0's
   unsigned long* count_array = calloc(max, sizeof( unsigned long));
 
-  cl_mem count_array_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof( unsigned long) * max, NULL, &ret);
+  cl_mem count_array_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned long) * max, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for count_array_mem");
   ret = clEnqueueWriteBuffer(command_queue, count_array_mem, CL_TRUE, 0, sizeof( unsigned long) * max, count_array, 0, NULL, NULL);
   CLU_ERRCHECK(ret, "Failed to write count_array_mem to device");
 
   // -------------------- STEP 1) count occurences -------------------- //
-  cl_program program = cluBuildProgramFromFile(context, device_id, program_name, NULL);
+  cl_program count_sort_program = cluBuildProgramFromFile(context, device_id, count_sort_program_name, NULL);
+  cl_program prefix_sum_program = cluBuildProgramFromFile(context, device_id, prefix_sum_program_name, NULL);
   size_t global_work_offset = 0;
   size_t local_work_size = 128;
   size_t global_work_size = extend_to_multiple(size, local_work_size);
 
-  cl_kernel count_kernel = clCreateKernel(program, "count", &ret);
-  CLU_ERRCHECK(ret, "Failed to create count_kernel kernel from program");
+  cl_kernel count_kernel = clCreateKernel(count_sort_program, "count", &ret);
+  CLU_ERRCHECK(ret, "Failed to create count_kernel kernel from count_sort_program");
 
   cluSetKernelArguments(count_kernel, 3,
-    sizeof(cl_mem), (void *)&list_buffer,
-    sizeof(cl_mem), (void *)&count_array_mem,
+    sizeof(cl_mem), (void*)&list_buffer,
+    sizeof(cl_mem), (void*)&count_array_mem,
     sizeof(unsigned long), &size
   );
 
@@ -154,30 +156,47 @@ int main(int argc, char** argv) {
     &global_work_offset, &global_work_size, &local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
   kernel_total_time += update_kernel_time(profiling_event);
 
-  CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, count_array_mem,
-    CL_TRUE, 0, sizeof(int) * max, count_array, 0, NULL, NULL), "Failed reading back result");
+  cl_mem count_array_prefix_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned long) * max, NULL, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for count_array_mem");
 
-  // ----------------------- STEP 2) prefix sum ----------------------- //
-  for (int i = 1; i < max; i++) {
-    count_array[i] = count_array[i] + count_array[i - 1];
-  }
+  cl_kernel prefix_sum_kernel = clCreateKernel(prefix_sum_program, "prefix_sum", &ret);
+  CLU_ERRCHECK(ret, "Failed to create hillis and steele kernel.");
+
+  cluSetKernelArguments(prefix_sum_kernel, 4,
+    sizeof(cl_mem), (void*)&count_array_mem,
+    sizeof(unsigned long) * max, NULL,
+    sizeof(cl_mem), (void*)&count_array_prefix_mem,
+    sizeof(unsigned long), &size
+  );
+
+  CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, prefix_sum_kernel, 1,
+    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel");
+
+  cl_kernel update_kernel = clCreateKernel(prefix_sum_program, "update", &ret);
+  CLU_ERRCHECK(ret, "Failed to create update kernel.");
+
+  cluSetKernelArguments(update_kernel, 3,
+    sizeof(cl_mem), (void*)&count_array_prefix_mem,
+    sizeof(cl_mem), (void*)&count_array_mem,
+    sizeof(unsigned long), &size
+  );
+
+  CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, update_kernel, 1,
+    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, NULL), "Failed to enqueue 1D kernel");
 
   // ------------------ STEP 3) insert in right order ----------------- //
   cl_mem result_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, list_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for result_mem");
 
-  cl_kernel insert_kernel = clCreateKernel(program, "insert", &ret);
-  CLU_ERRCHECK(ret, "Failed to create insert_kernel kernel from program");
+  cl_kernel insert_kernel = clCreateKernel(count_sort_program, "insert", &ret);
+  CLU_ERRCHECK(ret, "Failed to create insert_kernel kernel from count_sort_program");
 
   cluSetKernelArguments(insert_kernel, 4,
-    sizeof(cl_mem), (void *)&list_buffer,
-    sizeof(cl_mem), (void *)&count_array_mem,
-    sizeof(cl_mem), (void *)&result_mem,
+    sizeof(cl_mem), (void*)&list_buffer,
+    sizeof(cl_mem), (void*)&count_array_mem,
+    sizeof(cl_mem), (void*)&result_mem,
     sizeof(unsigned long), &size
   );
-
-  ret = clEnqueueWriteBuffer(command_queue, count_array_mem, CL_TRUE, 0, sizeof(unsigned long) * max, count_array, 0, NULL, NULL);
-  CLU_ERRCHECK(ret, "Failed to write count_array_mem to device");
 
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, insert_kernel, 1,
     &global_work_offset, &global_work_size, &local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
@@ -195,10 +214,11 @@ int main(int argc, char** argv) {
   CLU_ERRCHECK(clFinish(command_queue), "Failed to wait for command queue completion");
   CLU_ERRCHECK(clReleaseKernel(count_kernel), "Failed to release count_kernel");
   CLU_ERRCHECK(clReleaseKernel(insert_kernel), "Failed to release insert_kernel");
-  CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
+  CLU_ERRCHECK(clReleaseProgram(count_sort_program), "Failed to release count_sort_program");
 
   // free device memory
   CLU_ERRCHECK(clReleaseMemObject(count_array_mem), "Failed to release count_array_mem");
+  CLU_ERRCHECK(clReleaseMemObject(count_array_prefix_mem), "Failed to release count_array_mem");
   CLU_ERRCHECK(clReleaseMemObject(result_mem), "Failed to release result_mem");
   CLU_ERRCHECK(clReleaseMemObject(list_buffer), "Failed to release result_mem");
 
