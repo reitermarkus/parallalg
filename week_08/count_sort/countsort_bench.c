@@ -194,6 +194,7 @@ int main(int argc, char** argv) {
   // free device memory
   CLU_ERRCHECK(clReleaseMemObject(count_array_mem), "Failed to release count_array_mem");
   CLU_ERRCHECK(clReleaseMemObject(result_mem), "Failed to release result_mem");
+  CLU_ERRCHECK(clReleaseMemObject(list_buffer), "Failed to release result_mem");
 
   // free management resources
   CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
