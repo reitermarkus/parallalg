@@ -173,6 +173,9 @@ int main(int argc, char** argv) {
     sizeof(int), &size
   );
 
+  ret = clEnqueueWriteBuffer(command_queue, count_array_mem, CL_TRUE, 0, sizeof(int) * max, count_array, 0, NULL, NULL);
+  CLU_ERRCHECK(ret, "Failed to write count_array_mem to device");
+
   CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, insert_kernel, 1,
     &global_work_offset, &global_work_size, &local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
   kernel_total_time += update_kernel_time(profiling_event);
