@@ -34,10 +34,11 @@ void count_sort(person_t *list, int size) {
     if (list[i].age > max)
       max = list[i].age;
   }
+
   max++;
 
   // initialize count array of size max with 0's
-  int *count_arr = (int *)calloc(max, sizeof(int));
+  int *count_arr = calloc(max, sizeof(int));
 
   // step 2) count occurences
   for (int i = 0; i < size; i++) {
@@ -50,7 +51,7 @@ void count_sort(person_t *list, int size) {
   }
 
   // initialize a result array
-  person_t *result = (person_t *)calloc(size, sizeof(person_t));
+  person_t *result = calloc(size, sizeof(person_t));
 
   // step 4) insert elements in right order into result array
   for (int i = size - 1; i >= 0; i--) {
@@ -88,15 +89,15 @@ int main(int argc, char **argv) {
   srand(seed);
   printf("Generating list of size %d with seed %d\n\n", size, seed);
 
-  person_t *list = (person_t *)malloc(size * sizeof(person_t));
+  person_t *list = malloc(size * sizeof(person_t));
   create_person_list(list, size);
 
   // ---------------------- SEQUENTIAL ---------------------- //
   timestamp begin = now();
   count_sort(list, size);
-  printf("Sequential sort time:\t%.3f ms\n", (now() - begin) * 1000);  
-  
-  // ----------------------- PARALLEL ----------------------- // 
+  printf("Sequential sort time:\t%.3f ms\n", (now() - begin) * 1000);
+
+  // ----------------------- PARALLEL ----------------------- //
   cl_int ret;
   cl_context context;
   cl_device_id device_id = cluInitDevice(DEVICE_NUMBER, &context, NULL);
@@ -119,11 +120,12 @@ int main(int argc, char **argv) {
     if (list[i].age > max)
       max = list[i].age;
   }
+
   max++;
   unsigned long time_of_max = now() - begin;
 
   // initialize count array of size max with 0's
-  int *count_array = (int *)calloc(max, sizeof(int));
+  int *count_array = calloc(max, sizeof(int));
 
   cl_mem count_array_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(int) * max, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for count_array_mem");
@@ -153,14 +155,12 @@ int main(int argc, char **argv) {
   CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, count_array_mem,
     CL_TRUE, 0, sizeof(int) * max, count_array, 0, NULL, NULL), "Failed reading back result");
 
-
-  // ----------------------- STEP 2) prefix sum ----------------------- //  
+  // ----------------------- STEP 2) prefix sum ----------------------- //
   for (int i = 1; i < max; i++) {
     count_array[i] = count_array[i] + count_array[i-1];
   }
 
-
-  // ------------------ STEP 3) insert in right order ----------------- //  
+  // ------------------ STEP 3) insert in right order ----------------- //
   cl_mem result_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, list_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for result_mem");
 
@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
     CL_TRUE, 0, list_size, list, 0, NULL, NULL), "Failed reading back result");
 
   kernel_total_time += time_of_max;
-  printf("Parallel sort time:\t%f ms\n", (unsigned long) kernel_total_time * 1.0e-6);    
+  printf("Parallel sort time:\t%f ms\n", (unsigned long) kernel_total_time * 1.0e-6);
 
   // ------------------- CLEAN UP ------------------- //
   // wait for completed operations (there should be none)

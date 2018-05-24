@@ -21,7 +21,7 @@ void count_sort(person_t *input, int size) {
   max++;
 
   // initialize count array of size max with 0's
-  int *count_arr = (int *)calloc(max, sizeof(int));
+  int *count_arr = calloc(max, sizeof(int));
 
   // step 2) count occurences
   for (int i = 0; i < size; i++) {
@@ -34,7 +34,7 @@ void count_sort(person_t *input, int size) {
   }
 
   // initialize a result array
-  person_t *result = (person_t *)calloc(size, sizeof(person_t));
+  person_t *result = calloc(size, sizeof(person_t));
 
   // step 4) insert elements in right order into result array
   for (int i = size - 1; i >= 0; i--) {
@@ -69,12 +69,12 @@ int main(int argc, char **argv) {
   srand(seed);
   printf("Generating list of size %d with seed %d\n\n", size, seed);
 
-  person_t *list = (person_t *)malloc(size * sizeof(person_t));
+  person_t *list = malloc(size * sizeof(person_t));
   create_person_list(list, size);
 
   puts("Unsorted:");
   print_list(list, size);
-  
+
   count_sort(list, size);
 
   puts("\nSorted:");

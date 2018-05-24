@@ -24,4 +24,4 @@ kernel void insert(global const person_t* input, global int* count_array, global
       result[count_array[global_id]] = input[i];
     }
 	}
-} 
+}
