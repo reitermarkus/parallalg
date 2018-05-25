@@ -231,6 +231,7 @@ int main(int argc, char** argv) {
   CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
   CLU_ERRCHECK(clReleaseContext(context), "Failed to release OpenCL context");
 
+  free(count_array);
   free(list);
 
   return EXIT_SUCCESS;
