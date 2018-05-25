@@ -127,8 +127,13 @@ int main(int argc, char** argv) {
 
   // initialize count array of size max with 0's
 
+  cl_ulong* count_array = calloc(max, sizeof(unsigned long));
+
   cl_mem count_array_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(unsigned long) * max, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for count_array_mem");
+
+  ret = clEnqueueWriteBuffer(command_queue, count_array_mem, CL_TRUE, 0, sizeof(unsigned long) * max, count_array, 0, NULL, NULL);
+  CLU_ERRCHECK(ret, "Failed to write count_array to device");
 
   // -------------------- STEP 1) count occurences -------------------- //
   cl_program count_sort_program = cluBuildProgramFromFile(context, device_id, count_sort_program_name, NULL);
@@ -140,10 +145,9 @@ int main(int argc, char** argv) {
   cl_kernel count_kernel = clCreateKernel(count_sort_program, "count", &ret);
   CLU_ERRCHECK(ret, "Failed to create count_kernel kernel from count_sort_program");
 
-  cluSetKernelArguments(count_kernel, 4,
+  cluSetKernelArguments(count_kernel, 3,
     sizeof(cl_mem), (void*)&list_buffer,
     sizeof(cl_mem), (void*)&count_array_mem,
-    sizeof(unsigned long), &max,
     sizeof(unsigned long), &size
   );
 
