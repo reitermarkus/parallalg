@@ -108,9 +108,10 @@ int main(int argc, char** argv) {
 
   // ----------------------- PARALLEL ----------------------- //
   cl_int ret;
+
   cl_context context;
-  cl_device_id device_id = cluInitDevice(DEVICE_NUMBER, &context, NULL);
-  cl_command_queue command_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &ret);
+  cl_command_queue command_queue;
+  cl_device_id device_id = cluInitDeviceWithProperties(DEVICE_NUMBER, &context, &command_queue, CL_QUEUE_PROFILING_ENABLE);
 
   size_t list_size = sizeof(person_t) * size;
   cl_mem list_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, list_size, NULL, &ret);

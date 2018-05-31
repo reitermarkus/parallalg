@@ -57,8 +57,8 @@ int main(int argc, char** argv) {
 
   // ------------ Part A (resource management) ------------ //
   cl_context context;
-  cl_device_id device_id = cluInitDevice(DEVICE_NUMBER, &context, NULL);
-  cl_command_queue command_queue = clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &ret);
+  cl_command_queue command_queue;
+  cl_device_id device_id = cluInitDeviceWithProperties(DEVICE_NUMBER, &context, &command_queue, CL_QUEUE_PROFILING_ENABLE);
 
   // ------------ Part B (data management) ------------ //
 
