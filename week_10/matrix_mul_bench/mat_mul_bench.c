@@ -7,22 +7,29 @@
 #include "cl_utils.h"
 #include "utils.h"
 
-typedef struct _cl_mm_environment {
+typedef struct {
+  cl_device_id device_id;
   cl_context context;
   cl_command_queue queue;
   cl_program program;
   cl_kernel kernel;
+  size_t max_work_group_size;
 } cl_mm_environment;
 
 cl_mm_environment create_mm_environment() {
   cl_mm_environment res;
 
   // ocl initialization
-  cl_device_id device_id = cluInitDeviceWithProperties(0, &res.context, &res.queue, CL_QUEUE_PROFILING_ENABLE);
+  res.device_id = cluInitDeviceWithProperties(0, &res.context, &res.queue, CL_QUEUE_PROFILING_ENABLE);
+
+  CLU_ERRCHECK(
+    clGetDeviceInfo(res.device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(res.max_work_group_size), &res.max_work_group_size, NULL),
+    "Failed to get max work group size."
+  );
 
   // create kernel from source
   cl_int err;
-  res.program = cluBuildProgramFromFile(res.context, device_id, "mat_mul.cl", NULL);
+  res.program = cluBuildProgramFromFile(res.context, res.device_id, "mat_mul.cl", NULL);
   res.kernel = clCreateKernel(res.program, "mat_mul", &err);
   CLU_ERRCHECK(err, "Failed to create mat_mul kernel from program");
 
@@ -119,8 +126,8 @@ int main(int argc, char **argv) {
       // -- run computation --
 
       // set arguments and execute kernel
-      size_t S = extend_to_multiple(N, 32);
-      size_t size[2] = {S, S};
+      size_t local_work_size[] = {sqrt(env.max_work_group_size), sqrt(env.max_work_group_size)};
+      size_t global_work_size[] = {extend_to_multiple(N, local_work_size[0]), extend_to_multiple(N, local_work_size[1])};
 
       cluSetKernelArguments(env.kernel, 4,
         sizeof(cl_mem), (void *)&device_mat_c,
@@ -131,7 +138,7 @@ int main(int argc, char **argv) {
 
       // submit kernel
       cl_event event;
-      CLU_ERRCHECK(clEnqueueNDRangeKernel(env.queue, env.kernel, 2, NULL, size, NULL, 0, NULL, &event), "Failed to enqueue 2D kernel");
+      CLU_ERRCHECK(clEnqueueNDRangeKernel(env.queue, env.kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, &event), "Failed to enqueue 2D kernel");
 
       // wait for kernel
       clWaitForEvents(1, &event);
