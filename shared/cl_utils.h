@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
+
 #include "opencl.h"
 
 #ifndef _WIN32
@@ -31,6 +32,9 @@
 // if supplied, "command_queue" and "context" are filled with an initialized context and command queue on the device
 cl_device_id cluInitDevice(size_t num, cl_context* out_context, cl_command_queue* out_queue);
 
+// like cluInitDevice but with additional support for specifying command queue properties
+cl_device_id cluInitDeviceWithProperties(size_t num, cl_context* out_context, cl_command_queue* out_queue, cl_command_queue_properties properties);
+
 // get string with basic information about the ocl device "device" with id "id"
 const char* cluGetDeviceDescription(const cl_device_id device, unsigned id);
 
@@ -51,6 +55,10 @@ const char* cluDeviceTypeString(cl_device_type type);
 // ------------------------------------------------------------------------------------------------ implementations
 
 cl_device_id cluInitDevice(size_t num, cl_context* out_context, cl_command_queue* out_queue) {
+  return cluInitDeviceWithProperties(num, out_context, out_queue, 0);
+}
+
+cl_device_id cluInitDeviceWithProperties(size_t num, cl_context* out_context, cl_command_queue* out_queue, cl_command_queue_properties properties) {
   // get platform ids
   cl_uint ret_num_platforms;
   CLU_ERRCHECK(clGetPlatformIDs(0, NULL, &ret_num_platforms), "Failed to query number of ocl platforms");
@@ -64,10 +72,9 @@ cl_device_id cluInitDevice(size_t num, cl_context* out_context, cl_command_queue
     ret_num_platforms--;
   #endif
 
-  for (cl_uint i = 0; i < ret_num_platforms; ++i) {
+  for (cl_uint i = 0; i < ret_num_platforms; i++) {
     cl_uint ret_num_devices;
     CLU_ERRCHECK(clGetDeviceIDs(ret_platforms[i], CL_DEVICE_TYPE_DEFAULT, 0, NULL, &ret_num_devices), "Failed to query number of ocl devices");
-
     if (num < ret_num_devices) {
       // desired device is on this platform, select
       cl_device_id* ret_devices = alloca(sizeof(cl_device_id) * ret_num_devices);
@@ -86,7 +93,7 @@ cl_device_id cluInitDevice(size_t num, cl_context* out_context, cl_command_queue
 
     // create command queue if requested
     if (out_queue != NULL) {
-      *out_queue = clCreateCommandQueue(*out_context, device_id, 0, &err);
+      *out_queue = clCreateCommandQueue(*out_context, device_id, properties, &err);
       CLU_ERRCHECK(err, "Failed to create ocl command queue");
     }
   }
@@ -140,7 +147,7 @@ cl_program cluBuildProgramFromFile(cl_context context, cl_device_id device_id, c
 }
 
 void cluSetKernelArguments(const cl_kernel kernel, const cl_uint num_args, ...) {
-  //loop through the arguments and call clSetKernelArg for each
+  // loop through the arguments and call clSetKernelArg for each
   size_t arg_size;
   const void* arg_val;
   va_list arg_list;
