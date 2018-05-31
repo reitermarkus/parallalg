@@ -32,6 +32,7 @@ script:
   - make -C week_06/recursive_multistage_reduction
   - make -C week_07/auto_level
   - make -C week_08/count_sort
+  - make -C week_10/matrix_mul_bench
 
 notifications:
   email: false
