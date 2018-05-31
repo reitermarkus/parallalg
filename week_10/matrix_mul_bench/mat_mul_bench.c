@@ -67,22 +67,27 @@ int main(int argc, char **argv) {
 
   // for each size ...
   for (int i = 0; i < NUM_SIZES; i++) {
-    int N = SIZES[i];
+    int m = SIZES[i];
+    int k = SIZES[i];
+    int n = SIZES[i];
     mflops[i] = 0;
 
-    printf("\nSetting up N=%d ..\n", N);
+    printf("\nSetting up n=%d ..\n", n);
 
     // create input
-    restrict Matrix mat_a = create_matrix(N, N);
-    restrict Matrix mat_b = create_matrix(N, N);
-    restrict Matrix mat_c = create_matrix(N, N);
-    restrict Matrix mat_r = create_matrix(N, N);
+    restrict Matrix mat_a = create_matrix(m, k);
+    restrict Matrix mat_b = create_matrix(k, n);
+    restrict Matrix mat_c = create_matrix(m, n);
+    restrict Matrix mat_r = create_matrix(m, n);
 
     // fill matrix
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < N; j++) {
-        mat_a[i * N + j] = rand() / (float)RAND_MAX + 0.5; // some matrix
-        mat_b[i * N + j] = rand() / (float)RAND_MAX + 0.5; // some other matrix
+    for (int j = 0; j < k; j++) {
+      for (int i = 0; i < m; i++) {
+        mat_a[i * k + j] = rand() / (float)RAND_MAX + 0.5; // some matrix
+      }
+
+      for (int i = 0; i < n; i++) {
+        mat_b[i * k + j] = rand() / (float)RAND_MAX + 0.5; // some other matrix
       }
     }
 
@@ -90,35 +95,35 @@ int main(int argc, char **argv) {
     double cpu_start = now();
 
     #pragma omp parallel for
-    for (int i = 0; i < N; i++) {
-      for (int k = 0; k < N; k++) {
-        for (int j = 0; j < N; j++) {
-          mat_r[i * N + j] += mat_a[i * N + k] * mat_b[k * N + j];
+    for (int mi = 0; mi < m; mi++) {
+      for (int ni = 0; ni < n; ni++) {
+        for (int ki = 0; ki < k; ki++) {
+          mat_r[mi * n + ni] += mat_a[mi * k + ki] * mat_b[ki * n + ni];
         }
       }
     }
 
     double cpu_end = now();
     double cpu_duration = cpu_end - cpu_start;
-    printf("  CPU setup took %2.3fs / %5.3f GFLOPS\n", cpu_duration, (2.0 * N * N * N) / cpu_duration / 1e9);
+    printf("  CPU setup took %2.3fs / %5.3f GFLOPS\n", cpu_duration, (2.0 * m * k * n) / cpu_duration / 1e9);
 
     // repeat X times ..
     for (int r = 0; r < NUM_REPETITION; r++) {
       // clear result
-      memset(mat_c, 0, sizeof(value_t) * N * N);
+      memset(mat_c, 0, sizeof(value_t) * m * n);
 
       // create buffer on device
       cl_int err;
-      cl_mem device_mat_a = clCreateBuffer(env.context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, N * N * sizeof(value_t), NULL, &err);
+      cl_mem device_mat_a = clCreateBuffer(env.context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, m * k * sizeof(value_t), NULL, &err);
       CLU_ERRCHECK(err, "Failed to create buffer for matrix A");
-      cl_mem device_mat_b = clCreateBuffer(env.context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, N * N * sizeof(value_t), NULL, &err);
+      cl_mem device_mat_b = clCreateBuffer(env.context, CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY, k * n * sizeof(value_t), NULL, &err);
       CLU_ERRCHECK(err, "Failed to create buffer for matrix B");
-      cl_mem device_mat_c = clCreateBuffer(env.context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, N * N * sizeof(value_t), NULL, &err);
+      cl_mem device_mat_c = clCreateBuffer(env.context, CL_MEM_WRITE_ONLY | CL_MEM_HOST_READ_ONLY, m * n * sizeof(value_t), NULL, &err);
 
       // transfere data
-      err = clEnqueueWriteBuffer(env.queue, device_mat_a, CL_TRUE, 0, N * N * sizeof(value_t), mat_a, 0, NULL, NULL);
+      err = clEnqueueWriteBuffer(env.queue, device_mat_a, CL_TRUE, 0, m * k * sizeof(value_t), mat_a, 0, NULL, NULL);
       CLU_ERRCHECK(err, "Failed to write matrix A to device");
-      err = clEnqueueWriteBuffer(env.queue, device_mat_b, CL_TRUE, 0, N * N * sizeof(value_t), mat_b, 0, NULL, NULL);
+      err = clEnqueueWriteBuffer(env.queue, device_mat_b, CL_TRUE, 0, k * n * sizeof(value_t), mat_b, 0, NULL, NULL);
       CLU_ERRCHECK(err, "Failed to write matrix B to device");
 
       // --- perform benchmark ---
@@ -127,15 +132,17 @@ int main(int argc, char **argv) {
 
       // set arguments and execute kernel
       size_t local_work_size[] = {sqrt(env.max_work_group_size), sqrt(env.max_work_group_size)};
-      size_t global_work_size[] = {extend_to_multiple(N, local_work_size[0]), extend_to_multiple(N, local_work_size[1])};
+      size_t global_work_size[] = {extend_to_multiple(m, local_work_size[0]), extend_to_multiple(n, local_work_size[1])};
 
-      cluSetKernelArguments(env.kernel, 6,
+      cluSetKernelArguments(env.kernel, 8,
         sizeof(cl_mem), (void *)&device_mat_a,
         sizeof(cl_mem), (void *)&device_mat_b,
         sizeof(cl_mem), (void *)&device_mat_c,
         local_work_size[0] * local_work_size[1] * sizeof(float), NULL,
         local_work_size[0] * local_work_size[1] * sizeof(float), NULL,
-        sizeof(int), &N
+        sizeof(int), &m,
+        sizeof(int), &k,
+        sizeof(int), &n
       );
 
       // submit kernel
@@ -163,22 +170,22 @@ int main(int argc, char **argv) {
       CLU_ERRCHECK(clReleaseEvent(event), "Failed to release event");
 
       // copy results back to host
-      err = clEnqueueReadBuffer(env.queue, device_mat_c, CL_TRUE, 0, N * N * sizeof(value_t), mat_c, 0, NULL, NULL);
+      err = clEnqueueReadBuffer(env.queue, device_mat_c, CL_TRUE, 0, m * n * sizeof(value_t), mat_c, 0, NULL, NULL);
       CLU_ERRCHECK(err, "Failed reading back result");
 
       // check result
       bool success = true;
-      for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
+      for (int mi = 0; mi < m; mi++) {
+        for (int ni = 0; ni < n; ni++) {
           // if result is close enough, we are fine
-          if (fabsf(mat_c[i * N + j] - mat_r[i * N + j]) < 1e-10) continue;
+          if (fabsf(mat_c[mi * n + ni] - mat_r[mi * n + ni]) < 1e-10) continue;
           // printf("Wrong result for (%d,%d): %f vs. %f\n", i, j, mat_c[i * N + j], mat_r[i * N + j]);
           success = false;
         }
       }
 
       double seconds = duration / 1e9;
-      double current_mflops = (2.0 * N * N * N) / seconds / 1e9;
+      double current_mflops = (2.0 * m * k * n) / seconds / 1e9;
       printf("  Duration: %2.3fs, GFLOPS: %5.3f, Verification: %s\n", seconds, current_mflops, (success) ? "OK" : "FAILED");
 
       // keep track of overall success
@@ -193,7 +200,7 @@ int main(int argc, char **argv) {
       CLU_ERRCHECK(clReleaseMemObject(device_mat_c), "Failed to release Matrix C");
     }
 
-    printf("  Performance result for N=%d: %5.3f\n", N, mflops[i]);
+    printf("  Performance result for n=%d: %5.3f\n", n, mflops[i]);
 
     // --- cleanup ---
 
