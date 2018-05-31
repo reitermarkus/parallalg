@@ -130,9 +130,9 @@ int main(int argc, char **argv) {
       size_t global_work_size[] = {extend_to_multiple(N, local_work_size[0]), extend_to_multiple(N, local_work_size[1])};
 
       cluSetKernelArguments(env.kernel, 4,
-        sizeof(cl_mem), (void *)&device_mat_c,
         sizeof(cl_mem), (void *)&device_mat_a,
         sizeof(cl_mem), (void *)&device_mat_b,
+        sizeof(cl_mem), (void *)&device_mat_c,
         sizeof(int), &N
       );
 
