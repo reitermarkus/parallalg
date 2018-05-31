@@ -129,10 +129,12 @@ int main(int argc, char **argv) {
       size_t local_work_size[] = {sqrt(env.max_work_group_size), sqrt(env.max_work_group_size)};
       size_t global_work_size[] = {extend_to_multiple(N, local_work_size[0]), extend_to_multiple(N, local_work_size[1])};
 
-      cluSetKernelArguments(env.kernel, 4,
+      cluSetKernelArguments(env.kernel, 6,
         sizeof(cl_mem), (void *)&device_mat_a,
         sizeof(cl_mem), (void *)&device_mat_b,
         sizeof(cl_mem), (void *)&device_mat_c,
+        local_work_size[0] * local_work_size[1] * sizeof(float), NULL,
+        local_work_size[0] * local_work_size[1] * sizeof(float), NULL,
         sizeof(int), &N
       );
 
