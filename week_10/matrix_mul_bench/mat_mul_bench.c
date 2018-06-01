@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +30,7 @@ cl_mm_environment create_mm_environment() {
 
   // create kernel from source
   cl_int err;
-  res.program = cluBuildProgramFromFile(res.context, res.device_id, "mat_mul.cl", NULL);
+  res.program = cluBuildProgramFromFile(res.context, res.device_id, "mat_mul.cl", "-I ../../shared");
   res.kernel = clCreateKernel(res.program, "mat_mul", &err);
   CLU_ERRCHECK(err, "Failed to create mat_mul kernel from program");
 
@@ -52,9 +53,9 @@ void free_mm_environment(cl_mm_environment env) {
 int main(int argc, char **argv) {
   cl_mm_environment env = create_mm_environment();
 
-  int SIZES[] = {500, 734, 1024, 1493, 2345, 4001};
-  int NUM_SIZES = 6;
-  int NUM_REPETITION = 3;
+  size_t SIZES[] = {500, 734, 1024, 1493, 2345, 4001};
+  size_t NUM_SIZES = 6;
+  size_t NUM_REPETITION = 3;
 
   // ------ benchmarking -------
 
@@ -66,13 +67,13 @@ int main(int argc, char **argv) {
   bool all_valid = true;
 
   // for each size ...
-  for (int i = 0; i < NUM_SIZES; i++) {
-    int m = SIZES[i];
-    int k = SIZES[i];
-    int n = SIZES[i];
+  for (size_t i = 0; i < NUM_SIZES; i++) {
+    size_t m = SIZES[i];
+    size_t k = SIZES[i];
+    size_t n = SIZES[i];
     mflops[i] = 0;
 
-    printf("\nSetting up n=%d ..\n", n);
+    printf("\nSetting up n=%zu ..\n", n);
 
     // create input
     restrict Matrix mat_a = create_matrix(m, k);
@@ -140,9 +141,9 @@ int main(int argc, char **argv) {
         sizeof(cl_mem), (void *)&device_mat_c,
         local_work_size[0] * local_work_size[1] * sizeof(float), NULL,
         local_work_size[0] * local_work_size[1] * sizeof(float), NULL,
-        sizeof(int), &m,
-        sizeof(int), &k,
-        sizeof(int), &n
+        sizeof(unsigned long), &m,
+        sizeof(unsigned long), &k,
+        sizeof(unsigned long), &n
       );
 
       // submit kernel
@@ -200,7 +201,7 @@ int main(int argc, char **argv) {
       CLU_ERRCHECK(clReleaseMemObject(device_mat_c), "Failed to release Matrix C");
     }
 
-    printf("  Performance result for n=%d: %5.3f\n", n, mflops[i]);
+    printf("  Performance result for n=%zu: %5.3f\n", n, mflops[i]);
 
     // --- cleanup ---
 
