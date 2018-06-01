@@ -3,13 +3,7 @@ fn matrix_multiplication(mat_a : Vec<f32>, mat_b: Vec<f32>, n: usize) -> Vec<f32
 
   for i in 0..n {
     for j in 0..n {
-
-      let mut sum = 0.0;
-      for k in 0..n {
-        sum += mat_a[i * n + k] * mat_b[k * n + j];
-      }
-
-      mat_res[i * n + j] = sum;
+      mat_res[i * n + j] = (0..n).fold(0.0, |acc, k| acc + mat_a[i * n + k] * mat_b[k * n + j]);
     }
   }
 
