@@ -25,14 +25,7 @@ before_script:
   - eval "${MATRIX_EVAL}"
 
 script:
-  - make -C week_02/matrix_multiplication
-  - make -C week_03/heat_stencil
-  - make -C week_04/matrix_multiplication_profiling
-  - make -C week_05/heat_stencil
-  - make -C week_06/recursive_multistage_reduction
-  - make -C week_07/auto_level
-  - make -C week_08/count_sort
-  - make -C week_10/matrix_mul_bench
+  - . ci.sh
 
 notifications:
   email: false
