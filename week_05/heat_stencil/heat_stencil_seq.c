@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
     B = H;
 
     // show intermediate step
-    if (!(t % 1000)) {
+    if (!(t % 1000) && !getenv("CI")) {
       printf("Step t=%d:\n", t);
       print_temperature(A, N, N);
     }

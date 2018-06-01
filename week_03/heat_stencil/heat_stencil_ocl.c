@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
     dev_vec_b = dev_vec_h;
 
     // show intermediate step
-    if (!(t % 1000)) {
+    if (!(t % 1000) && !getenv("CI")) {
       ret = clEnqueueReadBuffer(command_queue, dev_vec_a, CL_TRUE, 0, vec_size, matrix_a, 0, NULL, NULL);
       printf("Step t=%d:\n", t);
       print_temperature(matrix_a, n, n);
