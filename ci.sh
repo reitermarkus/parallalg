@@ -18,7 +18,7 @@ for p in "${projects[@]}"; do
 
   start_time="$(date +%s)"
 
-  make -C "${p}"
+  make run -C "${p}"
 
   end_time="$(date +%s)"
   duration=$((${end_time} - ${start_time}))
