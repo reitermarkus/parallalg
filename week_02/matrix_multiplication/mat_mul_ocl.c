@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 
   cl_device_id device_id;
   cl_uint ret_num_devices;
-  ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &device_id, &ret_num_devices);
+  ret = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_GPU, 1, &device_id, &ret_num_devices);
 
   cl_context context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
 

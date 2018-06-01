@@ -74,11 +74,11 @@ cl_device_id cluInitDeviceWithProperties(size_t num, cl_context* out_context, cl
 
   for (cl_uint i = 0; i < ret_num_platforms; i++) {
     cl_uint ret_num_devices;
-    CLU_ERRCHECK(clGetDeviceIDs(ret_platforms[i], CL_DEVICE_TYPE_DEFAULT, 0, NULL, &ret_num_devices), "Failed to query number of ocl devices");
+    CLU_ERRCHECK(clGetDeviceIDs(ret_platforms[i], CL_DEVICE_TYPE_GPU, 0, NULL, &ret_num_devices), "Failed to query number of ocl devices");
     if (num < ret_num_devices) {
       // desired device is on this platform, select
       cl_device_id* ret_devices = alloca(sizeof(cl_device_id) * ret_num_devices);
-      CLU_ERRCHECK(clGetDeviceIDs(ret_platforms[i], CL_DEVICE_TYPE_DEFAULT, ret_num_devices, ret_devices, NULL), "Failed to retrieve ocl devices");
+      CLU_ERRCHECK(clGetDeviceIDs(ret_platforms[i], CL_DEVICE_TYPE_GPU, ret_num_devices, ret_devices, NULL), "Failed to retrieve ocl devices");
       device_id = ret_devices[num];
     }
 
