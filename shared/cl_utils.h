@@ -36,7 +36,7 @@ cl_device_id cluInitDevice(size_t num, cl_context* out_context, cl_command_queue
 cl_device_id cluInitDeviceWithProperties(size_t num, cl_context* out_context, cl_command_queue* out_queue, cl_command_queue_properties properties);
 
 // get string with basic information about the ocl device "device" with id "id"
-const char* cluGetDeviceDescription(const cl_device_id device, unsigned id);
+char* cluGetDeviceDescription(const cl_device_id device);
 
 // loads and builds program from "fn" on the supplied context and device, with the options string "options"
 // aborts and reports the build log in case of compiler errors
@@ -162,12 +162,23 @@ void cluSetKernelArguments(const cl_kernel kernel, const cl_uint num_args, ...) 
   va_end(arg_list);
 }
 
-void cluGetDeviceName(const cl_device_id device, const size_t buff_size, char* buffer) {
-  CLU_ERRCHECK(clGetDeviceInfo(device, CL_DEVICE_NAME, buff_size, buffer, NULL), "Error getting \"device name\" info");
+char* cluGetDeviceName(const cl_device_id device) {
+  size_t size = 0;
+  clGetDeviceInfo(device, CL_DEVICE_NAME, 0, NULL, &size);
+
+  char* device_name = malloc(size * sizeof(char));
+  CLU_ERRCHECK(clGetDeviceInfo(device, CL_DEVICE_NAME, size, device_name, NULL), "Error getting \"device name\" info");
+
+  return device_name;
 }
 
-void cluGetDeviceVendor(const cl_device_id device, const size_t buff_size, char* buffer) {
-  CLU_ERRCHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, buff_size, buffer, NULL), "Error getting \"device vendor\" info");
+char* cluGetDeviceVendor(const cl_device_id device) {
+  size_t size = 0;
+  clGetDeviceInfo(device, CL_DEVICE_VENDOR, 0, NULL, &size);
+
+  char* vendor_name = malloc(size * sizeof(char));
+  CLU_ERRCHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, size, vendor_name, NULL), "Error getting \"device vendor\" info");
+  return vendor_name;
 }
 
 cl_device_type cluGetDeviceType(cl_device_id device) {
@@ -176,20 +187,20 @@ cl_device_type cluGetDeviceType(cl_device_id device) {
   return retval;
 }
 
-#define MAX_DEVICES 16
-const char* cluGetDeviceDescription(const cl_device_id device, unsigned id) {
-  static char descriptions[MAX_DEVICES][128];
-  static cl_bool initialized[MAX_DEVICES];
-  assert(id < MAX_DEVICES && "Device limit exceeded");
+char* cluGetDeviceDescription(const cl_device_id device) {
+  char* name = cluGetDeviceName(device);
+  char* vendor = cluGetDeviceVendor(device);
 
-  if (!initialized[id]) {
-    char name[255], vendor[255];
-    cluGetDeviceName(device, 255, name);
-    cluGetDeviceVendor(device, 255, vendor);
-    sprintf(descriptions[id], "%32s  |  Vendor: %32s  |  Type: %4s", name, vendor, cluDeviceTypeString(cluGetDeviceType(device)));
-  }
 
-  return descriptions[id];
+  size_t size = snprintf(NULL, 0, "%32s  |  Vendor: %32s  |  Type: %4s", name, vendor, cluDeviceTypeString(cluGetDeviceType(device))) + 1;
+
+  char* description = malloc(size * sizeof(char));
+  sprintf(description, "%32s  |  Vendor: %32s  |  Type: %4s", name, vendor, cluDeviceTypeString(cluGetDeviceType(device)));
+
+  free(name);
+  free(vendor);
+
+  return description;
 }
 
 const char* cluDeviceTypeString(cl_device_type type) {

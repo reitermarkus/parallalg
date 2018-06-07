@@ -9,6 +9,7 @@
 
 typedef struct {
   cl_device_id device_id;
+  char* device_name;
   cl_context context;
   cl_command_queue queue;
   cl_program program;
@@ -21,6 +22,8 @@ cl_mm_environment create_mm_environment() {
 
   // ocl initialization
   res.device_id = cluInitDeviceWithProperties(0, &res.context, &res.queue, CL_QUEUE_PROFILING_ENABLE);
+
+  res.device_name = cluGetDeviceName(res.device_id);
 
   CLU_ERRCHECK(
     clGetDeviceInfo(res.device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(res.max_work_group_size), &res.max_work_group_size, NULL),
@@ -38,6 +41,8 @@ cl_mm_environment create_mm_environment() {
 }
 
 void free_mm_environment(cl_mm_environment env) {
+  free(env.device_name);
+
   // wait for completed operations (there should be none)
   CLU_ERRCHECK(clFlush(env.queue), "Failed to flush command queue");
   CLU_ERRCHECK(clFinish(env.queue), "Failed to wait for command queue completion");
@@ -59,7 +64,7 @@ int main(int argc, char **argv) {
   // ------ benchmarking -------
 
   srand(0);
-  printf("Start benchmarking ...\n");
+  printf("Start benchmarking on %s ...\n", env.device_name);
 
   // the best performance
   double mflops[NUM_SIZES];
