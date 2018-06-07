@@ -12,7 +12,7 @@ ifeq ($(OS), Darwin)
     CC = $(LLVM_PREFIX)/bin/clang
     CFLAGS += -I$(LLVM_PREFIX)/include -L$(LLVM_PREFIX)/lib
   else
-    $(error "GCC is not installed, run `brew install llvm`")
+    $(error "LLVM is not installed, run `brew install llvm`")
   endif
 
   # Use dedicated GPU on MacBookPro.
