@@ -86,6 +86,7 @@ int main(int argc, char **argv) {
     restrict Matrix mat_r = create_matrix(m, n);
 
     // fill matrix
+    #pragma omp parallel for
     for (int j = 0; j < k; j++) {
       for (int i = 0; i < m; i++) {
         mat_a[i * k + j] = rand() / (float)RAND_MAX + 0.5; // some matrix
@@ -101,8 +102,8 @@ int main(int argc, char **argv) {
 
     #pragma omp parallel for
     for (int mi = 0; mi < m; mi++) {
-      for (int ni = 0; ni < n; ni++) {
-        for (int ki = 0; ki < k; ki++) {
+      for (int ki = 0; ki < k; ki++) {
+        for (int ni = 0; ni < n; ni++) {
           mat_r[mi * n + ni] += mat_a[mi * k + ki] * mat_b[ki * n + ni];
         }
       }
