@@ -21,7 +21,7 @@ cl_mm_environment create_mm_environment() {
   cl_mm_environment res;
 
   // ocl initialization
-  res.device_id = cluInitDeviceWithProperties(0, &res.context, &res.queue, CL_QUEUE_PROFILING_ENABLE);
+  res.device_id = cluInitDeviceWithProperties(DEVICE_NUMBER, &res.context, &res.queue, CL_QUEUE_PROFILING_ENABLE);
 
   res.device_name = cluGetDeviceName(res.device_id);
 
