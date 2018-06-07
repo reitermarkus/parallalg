@@ -17,9 +17,9 @@ kernel void mat_mul(const global const float* a, const global const float* b, gl
     const size_t tiled_col = tile_size * t + col;
 
     if (tiled_col < k) {
-      sub_a[row * tile_size + col] = a[global_row * k + tiled_col];
+      sub_a[col * tile_size + row] = a[global_row * k + tiled_col];
     } else {
-      sub_a[row * tile_size + col] = 0.0f;
+      sub_a[col * tile_size + row] = 0.0f;
     }
 
     if (tiled_row < k) {
@@ -31,7 +31,7 @@ kernel void mat_mul(const global const float* a, const global const float* b, gl
     barrier(CLK_LOCAL_MEM_FENCE);
 
     for (int ti = 0; ti < tile_size; ti++) {
-      acc += sub_a[row * tile_size + ti] * sub_b[ti * tile_size + col];
+      acc += sub_a[ti * tile_size + row] * sub_b[ti * tile_size + col];
     }
 
     barrier(CLK_LOCAL_MEM_FENCE);
