@@ -38,13 +38,10 @@ int main(int argc, char** argv) {
   }
 
   // compute minimal costs for multiplying A_i x ... x A_j
-  #pragma omp parallel for
   for (int d = 1; d < n; d++) {   // < distance between i and j
-    for (int i = 0; i < n; i++) { // < starting at each i
+    #pragma omp parallel for
+    for (int i = 0; i < n - d; i++) { // < starting at each i
       int j = i + d;              // < compute end j
-
-      // stop when exceeding boundary
-      if (j >= n) break;
 
       // find cheapest cut between i and j
       int min = INT_MAX;
