@@ -23,9 +23,9 @@ addons:
 
 before_script:
   - eval "${MATRIX_EVAL}"
+  - clinfo
 
 script:
-  - clinfo
   - . ci.sh
 
 notifications:
