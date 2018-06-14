@@ -22,7 +22,6 @@ addons:
       - ocl-icd-opencl-dev
 
 before_script:
-  - export CFLAGS='-Werror'
   - eval "${MATRIX_EVAL}"
 
 script:
