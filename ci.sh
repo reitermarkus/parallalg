@@ -21,8 +21,26 @@ for p in "${projects[@]}"; do
 
   start_time="$(date +%s)"
 
-  echo "make run -C \"${p}\""
-  make run -C "${p}" || exit_status=1
+  mkdir -p "$(dirname "/tmp/${p}")"
+
+  if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
+    make -C "${p}"
+  else
+    make run -C "${p}"
+  fi &>"/tmp/${p}.log"
+
+  if [ $? -eq 0 ]; then
+    printf '\033[32m'
+  else
+    printf '\033[31m'
+    exit_status=1
+  fi
+
+  echo "${p}"
+  printf '\033[0m'
+
+  cat "/tmp/${p}.log"
+  rm "/tmp/${p}.log"
 
   end_time="$(date +%s)"
   duration=$((${end_time} - ${start_time}))
