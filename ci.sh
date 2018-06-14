@@ -7,6 +7,7 @@ projects=(
   week_07/auto_level
   week_08/count_sort
   week_10/matrix_mul_bench
+  week_11/dynamic_programming
 )
 
 for p in "${projects[@]}"; do
