@@ -7,7 +7,6 @@
 
 #include "utils.h"
 
-#define NUM_TILES 5
 
 int main(int argc, char** argv) {
   int min_size = 10;
@@ -15,8 +14,15 @@ int main(int argc, char** argv) {
 
   // read problem size
   int n = 2000;
-  if (argc > 1) {
-    n = atoi(argv[1]);
+  int num_tiles = 5;
+
+  switch (argc) {
+    case 2:
+      n = atoi(argv[1]);
+      break;
+    case 3:
+      num_tiles = atoi(argv[2]);
+      break;
   }
 
   int s = n + 1;
@@ -43,19 +49,19 @@ int main(int argc, char** argv) {
   for (int d = 1; d < n; d++) {   // < distance between i and j
     #pragma omp parallel for
     for (int i = 0; i < n - d; i++) { // < starting at each i
-      for(int q = 0; q < NUM_TILES; q++) {
+      for(int q = 0; q < num_tiles; q++) {
         int j = i + d;              // < compute end j
-        int tiled_row = NUM_TILES * q + j;
-        int tiled_col = NUM_TILES * q + i;
+        int tiled_row = num_tiles * q + j;
+        int tiled_col = num_tiles * q + i;
 
         // find cheapest cut between i and j
         int min = INT_MAX;
         for (int k = tiled_col; k < tiled_row; k++) {
-          int costs = minimum_costs[tiled_col * NUM_TILES + k] + minimum_costs[(k + 1) * NUM_TILES + tiled_row] + l[tiled_col] * l[k + 1] * l[tiled_row + 1];
+          int costs = minimum_costs[tiled_col * num_tiles + k] + minimum_costs[(k + 1) * num_tiles + tiled_row] + l[tiled_col] * l[k + 1] * l[tiled_row + 1];
           min = (costs < min) ? costs : min;
         }
 
-        minimum_costs[tiled_col * NUM_TILES + tiled_row] = min;
+        minimum_costs[tiled_col * num_tiles + tiled_row] = min;
       }
     }
   }
