@@ -22,13 +22,13 @@ int main(int argc, char** argv) {
 
   // generate random matrix sizes
   srand(0);
-  int* l = (int*)malloc(sizeof(int) * S);
+  int* l = malloc(sizeof(int) * S);
   for (int i = 0; i < S; i++) {
     l[i] = ((rand() / (float)RAND_MAX) * (maxSize - minSize)) + minSize;
   }
 
   // compute minimum costs
-  int* C = (int*)malloc(sizeof(int) * N * N);
+  int* C = malloc(sizeof(int) * N * N);
 
   double start = now();
 
@@ -51,6 +51,7 @@ int main(int argc, char** argv) {
         int costs = C[i * N + k] + C[(k + 1) * N + j] + l[i] * l[k + 1] * l[j + 1];
         min = (costs < min) ? costs : min;
       }
+
       C[i * N + j] = min;
     }
   }
