@@ -1,4 +1,4 @@
-CFLAGS += -std=c11 -O3 -Wall -Werror -pedantic -I../../shared -D _POSIX_C_SOURCE=200809L
+CFLAGS += -std=c11 -march=native -O3 -Wall -Werror -pedantic -I../../shared -D _POSIX_C_SOURCE=200809L
 
 ifneq ($(OS), Windows_NT)
   OS ?= $(shell uname -s)
