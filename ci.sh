@@ -23,13 +23,7 @@ for p in "${projects[@]}"; do
 
   mkdir -p "$(dirname "/tmp/${p}")"
 
-  if [ "$TRAVIS_OS_NAME" = 'linux' ]; then
-    make -C "${p}"
-  else
-    make run -C "${p}"
-  fi &>"/tmp/${p}.log"
-
-  if [ $? -eq 0 ]; then
+  if make -C "${p}" &>"/tmp/${p}.log"; then
     printf '\033[32m'
   else
     printf '\033[31m'
