@@ -10,6 +10,8 @@ projects=(
   week_11/dynamic_programming
 )
 
+exit_status=0
+
 for p in "${projects[@]}"; do
   fold_id=$(echo "${p}" | tr '/' _)
   timer_id=$RANDOM
@@ -19,7 +21,8 @@ for p in "${projects[@]}"; do
 
   start_time="$(date +%s)"
 
-  make run -C "${p}"
+  echo "make run -C \"${p}\""
+  make run -C "${p}" || exit_status=1
 
   end_time="$(date +%s)"
   duration=$((${end_time} - ${start_time}))
@@ -27,3 +30,5 @@ for p in "${projects[@]}"; do
   echo "travis_time:end:${timer_id},start=${start_time},finish=${end_time},duration=${duration}"
   echo "travis_fold:end:${fold_id}"
 done
+
+exit $exit_status
