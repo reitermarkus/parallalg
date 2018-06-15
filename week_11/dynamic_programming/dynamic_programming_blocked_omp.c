@@ -51,17 +51,17 @@ int main(int argc, char** argv) {
     for (int i = 0; i < n - d; i++) { // < starting at each i
       for(int q = 0; q < num_tiles; q++) {
         int j = i + d;              // < compute end j
-        int tiled_row = num_tiles * q + j;
-        int tiled_col = num_tiles * q + i;
+        int tiled_row = num_tiles * q + i;
+        int tiled_col = num_tiles * q + j;
 
         // find cheapest cut between i and j
         int min = INT_MAX;
-        for (int k = tiled_col; k < tiled_row; k++) {
-          int costs = minimum_costs[tiled_col * num_tiles + k] + minimum_costs[(k + 1) * num_tiles + tiled_row] + l[tiled_col] * l[k + 1] * l[tiled_row + 1];
+        for (int k = tiled_row; k < tiled_col; k++) {
+          int costs = minimum_costs[tiled_row * num_tiles + k] + minimum_costs[(k + 1) * num_tiles + tiled_col] + l[tiled_row] * l[k + 1] * l[tiled_col + 1];
           min = (costs < min) ? costs : min;
         }
 
-        minimum_costs[tiled_col * num_tiles + tiled_row] = min;
+        minimum_costs[tiled_row * num_tiles + tiled_col] = min;
       }
     }
   }
