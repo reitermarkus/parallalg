@@ -1,4 +1,4 @@
-TARGETS = dynamic_programming_seq dynamic_programming_omp dynamic_programming_blocked_omp
+TARGETS = dynamic_programming_seq dynamic_programming_omp dynamic_programming_blocked_omp dynamic_programming_blocked_ocl
 
 include ../../shared/shared.mk
 
@@ -10,3 +10,5 @@ run: all
 	@./dynamic_programming_omp
 	@echo "blocked OpenMP:"
 	@./dynamic_programming_blocked_omp
+	@echo "OpenCL:"
+	@./dynamic_programming_blocked_ocl
