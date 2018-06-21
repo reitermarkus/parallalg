@@ -5,10 +5,11 @@ include ../../shared/shared.mk
 run: all
 	@echo "Sequential:"
 	@./dynamic_programming_seq
-	@echo ""
+	@echo
 	@echo "OpenMP:"
 	@./dynamic_programming_omp
-	@echo "blocked OpenMP:"
+	@echo
+	@echo "OpenMP (blocked):"
 	@./dynamic_programming_blocked_omp
 	@echo "OpenCL:"
 	@./dynamic_programming_blocked_ocl
