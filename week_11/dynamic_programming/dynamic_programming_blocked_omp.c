@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     minimum_costs[i * n + i] = 0; // there is no multiplication cost for those sub-terms
   }
 
-  int num_blocks = n % block_size != 0 ? n / block_size + 1 : n / block_size;
+  int num_blocks = ceil(n / (double)block_size);
 
   // iterate through blocks in wave-front order
   for(int bd = 0; bd < num_blocks; bd++) {
