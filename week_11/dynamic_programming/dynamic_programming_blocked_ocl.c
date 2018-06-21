@@ -16,25 +16,26 @@ int main(int argc, char** argv) {
   unsigned long n          = argc >= 2 ? atoi(argv[1]) : 2000;
   unsigned long block_size = argc >= 3 ? atoi(argv[2]) : 22;
 
+  printf("Computing minimum cost for multiplying %lu matrices ...\n", n);
+
   // init
   srand(0);
   unsigned long s = n + 1;
-  unsigned long* l = malloc(sizeof(unsigned long) * s);
+  unsigned long* sizes = NULL;
+  unsigned long sizes_size = sizeof(*sizes) * s;
+  sizes = malloc(sizes_size);
+
   for (size_t i = 0; i < s; i++) {
-    l[i] = ((rand() / (float)RAND_MAX) * (max_size - min_size)) + min_size;
+    sizes[i] = ((rand() / (float)RAND_MAX) * (max_size - min_size)) + min_size;
   }
 
-  unsigned long* minimum_costs = malloc(sizeof(*minimum_costs) * n * n);
+  unsigned long* minimum_costs = NULL;
+  unsigned long minimum_costs_size = sizeof(*minimum_costs) * n * n;
+  minimum_costs = malloc(minimum_costs_size);
+
   // ---------- compute ----------
 
   timestamp begin = now();
-
-  // initialize solutions for costs of single matrix
-  for (unsigned long i = 0; i < n; i++) {
-    minimum_costs[i * n + i] = 0; // there is no multiplication cost for those sub-terms
-  }
-
-  unsigned long num_blocks = ceil(n / (double)block_size);
 
   cl_int ret;
 
@@ -43,55 +44,79 @@ int main(int argc, char** argv) {
   cl_device_id device_id = cluInitDeviceWithProperties(DEVICE_NUMBER, &context, &command_queue, CL_QUEUE_PROFILING_ENABLE);
 
   // ------------ Part B (data management) ------------ //
-  size_t vec_size = sizeof(unsigned long) * n;
-  cl_mem l_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
-  CLU_ERRCHECK(ret, "Failed to create buffer for l");
-  cl_mem minimum_costs_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, vec_size, NULL, &ret);
+  cl_mem sizes_mem = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR, sizes_size, sizes, &ret);
+  CLU_ERRCHECK(ret, "Failed to create buffer for sizes");
+
+  cl_mem minimum_costs_mem = clCreateBuffer(context, CL_MEM_READ_WRITE, minimum_costs_size, NULL, &ret);
   CLU_ERRCHECK(ret, "Failed to create buffer for minimum costs");
 
-  ret = clEnqueueWriteBuffer(command_queue, minimum_costs_mem, CL_TRUE, 0, vec_size, minimum_costs, 0, NULL, NULL);
+  ret = clEnqueueWriteBuffer(command_queue, minimum_costs_mem, CL_TRUE, 0, minimum_costs_size, minimum_costs, 0, NULL, NULL);
   CLU_ERRCHECK(ret, "Failed to write minimum costs to device");
 
-  free(minimum_costs);
-  free(l);
+  free(sizes);
 
   cl_program program = cluBuildProgramFromFile(context, device_id, "dynamic_programming.cl", NULL);
-
-  // 11) schedule kernel
-  size_t global_work_offset = 0;
-  size_t local_work_size = 256;
-  size_t global_work_size = extend_to_multiple(n, local_work_size);
 
   cl_kernel kernel = clCreateKernel(program, "iterate_cells", &ret);
   CLU_ERRCHECK(ret, "Failed to create iterate_cells kernel from program");
 
-  cluSetKernelArguments(kernel, 3,
-    sizeof(cl_mem), (void*)&l_mem,
-    sizeof(cl_mem), (void*)&minimum_costs_mem,
-    sizeof(unsigned long), &num_blocks
-  );
+  unsigned long num_blocks = ceil(n / (double)block_size);
 
-  cl_event profiling_event;
-  CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
-    &global_work_offset, &global_work_size, &local_work_size, 0, NULL, &profiling_event), "Failed to enqueue 1D kernel");
+  cl_event* event_matrix = malloc(sizeof(cl_event) * num_blocks * num_blocks);
+
+  // iterate through blocks in wave-front order
+  for (unsigned long d = 0; d < num_blocks; d++) {
+    // Enqueue all blocks in parallel.
+    for (unsigned long i = 0; i < num_blocks - d; i++) {
+      unsigned long j = i + d;
+
+      cluSetKernelArguments(kernel, 6,
+        sizeof(unsigned long), &n,
+        sizeof(unsigned long), &block_size,
+        sizeof(unsigned long), &i,
+        sizeof(unsigned long), &j,
+        sizeof(cl_mem),        (void*)&minimum_costs_mem,
+        sizeof(cl_mem),        (void*)&sizes_mem
+      );
+
+      size_t global_work_offset = 0;
+      size_t global_work_size = 1;
+      size_t local_work_size = 1;
+
+      cl_event wait_list[] = { event_matrix[(i + 1) * num_blocks + j], event_matrix[i * num_blocks + (j - 1)] };
+
+      CLU_ERRCHECK(clEnqueueNDRangeKernel(command_queue, kernel, 1,
+        &global_work_offset, &global_work_size, &local_work_size, i <= j ? 0 : 2, i <= j ? NULL : wait_list, &event_matrix[i * num_blocks + j]), "Failed to enqueue 1D kernel");
+    }
+  }
+
+  cl_event first_event = event_matrix[0 * num_blocks + 0];
+  cl_event last_event = event_matrix[0 * num_blocks + num_blocks - 1];
 
   // wait until event finishes
-  ret = clWaitForEvents(1, &profiling_event);
+  CLU_ERRCHECK(clWaitForEvents(1, &last_event), "Failed waiting for last event.");
+
   // get profiling data
   cl_ulong event_start_time = (cl_ulong)0;
   cl_ulong event_end_time = (cl_ulong)0;
-  ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, NULL);
-  ret = clGetEventProfilingInfo(profiling_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, NULL);
+  ret = clGetEventProfilingInfo(first_event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &event_start_time, NULL);
+  ret = clGetEventProfilingInfo(last_event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &event_end_time, NULL);
 
-  cl_ulong output[n];
+
+  free(event_matrix);
+
   CLU_ERRCHECK(clEnqueueReadBuffer(command_queue, minimum_costs_mem,
-    CL_TRUE, 0, sizeof(unsigned long) * n, output, 0, NULL, NULL), "Failed reading back result");
+    CL_TRUE, 0, minimum_costs_size, minimum_costs, 0, NULL, NULL), "Failed reading back result");
+
+  printf("Minimal costs: %lu FLOPS\n", minimum_costs[0 * n + n - 1]);
+
+  free(minimum_costs);
 
   unsigned long kernel_total_time = (unsigned long)(event_end_time - event_start_time);
-  printf("Total Kernel Execution Time: %f ms\n", kernel_total_time * 1.0e-6);
+  printf("Total kernel execution time: %.3fs\n", kernel_total_time * 1.0e-9);
 
   timestamp end = now();
-  printf("Total time: %.3f ms\n", (end - begin) * 1000);
+  printf("Total time: %.3fs\n", end - begin);
 
   // ---------- cleanup ----------
   // wait for completed operations (there should be none)
@@ -101,8 +126,8 @@ int main(int argc, char** argv) {
   CLU_ERRCHECK(clReleaseProgram(program), "Failed to release program");
 
   // free device memory
-  CLU_ERRCHECK(clReleaseMemObject(minimum_costs_mem), "Failed to release Matrix A");
-  CLU_ERRCHECK(clReleaseMemObject(l_mem), "Failed to release Matrix B");
+  CLU_ERRCHECK(clReleaseMemObject(minimum_costs_mem), "Failed to release minimum costs");
+  CLU_ERRCHECK(clReleaseMemObject(sizes_mem), "Failed to release sizes");
 
   // free management resources
   CLU_ERRCHECK(clReleaseCommandQueue(command_queue), "Failed to release command queue");
