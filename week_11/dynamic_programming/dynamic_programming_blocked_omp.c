@@ -14,14 +14,14 @@ int main(int argc, char** argv) {
 
   // read problem size
   int n = 2000;
-  int num_tiles = 5;
+  int block_size = 22;
 
   switch (argc) {
     case 2:
       n = atoi(argv[1]);
       break;
     case 3:
-      num_tiles = atoi(argv[2]);
+      block_size = atoi(argv[2]);
       break;
   }
 
@@ -45,23 +45,44 @@ int main(int argc, char** argv) {
     minimum_costs[i * n + i] = 0; // there is no multiplication cost for those sub-terms
   }
 
-  // compute minimal costs for multiplying A_i x ... x A_j
-  for (int d = 1; d < n; d++) {   // < distance between i and j
+  int num_blocks = n % block_size != 0 ? n / block_size + 1 : n / block_size;
+
+  // iterate through blocks in wave-front order
+  for(int bd = 0; bd < num_blocks; bd++) {
     #pragma omp parallel for
-    for (int i = 0; i < n - d; i++) { // < starting at each i
-      for(int q = 0; q < num_tiles; q++) {
-        int j = i + d;              // < compute end j
-        int tiled_row = num_tiles * q + i;
-        int tiled_col = num_tiles * q + j;
+    for(int bi = 0; bi < num_blocks - bd; bi++) {
+      int bj = bi + bd;
 
-        // find cheapest cut between i and j
-        int min = INT_MAX;
-        for (int k = tiled_row; k < tiled_col; k++) {
-          int costs = minimum_costs[tiled_row * num_tiles + k] + minimum_costs[(k + 1) * num_tiles + tiled_col] + l[tiled_row] * l[k + 1] * l[tiled_col + 1];
-          min = (costs < min) ? costs : min;
+     // get lower-left corner of current blocks
+      int ci = (bi + 1) * block_size - 1;
+      int cj = bj * block_size;
+
+      // process current block in wave-front order
+      for(int d = 0; d < 2 * block_size - 1; d++) {
+        for(int li = d >= block_size ? block_size - 1 : d,
+            lj = d < block_size ? 0 : d - block_size + 1; li >= 0 && lj < block_size; lj++, li--) {
+          // get coordinated in C
+          int i = ci - li;
+          int j = cj + lj;
+
+          // check whether the current cell still of interest
+          if (i > j || i >= n || j >= n)
+            continue;
+
+          if (i == j) {
+            minimum_costs[i * n + j] = 0;
+            continue;
+          }
+
+          // find cheapest cut between i and j
+          int min = INT_MAX;
+          for(int k = i; k < j; k++) {
+            int costs = minimum_costs[i * n + k] + minimum_costs[(k + 1) * n + j] + l[i] * l[k+1] * l[j+1];
+            min = costs < min ? costs : min;
+          }
+
+          minimum_costs[i * n + j] = min;
         }
-
-        minimum_costs[tiled_row * num_tiles + tiled_col] = min;
       }
     }
   }
