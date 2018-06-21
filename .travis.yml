@@ -1,11 +1,13 @@
 language: c
 
+cache: ccache
+
 matrix:
   include:
     - os: osx
       osx_image: xcode9.3
       env:
-        - MATRIX_EVAL='brew install llvm clinfo'
+        - MATRIX_EVAL='brew install llvm clinfo ccache'
     - os: linux
       compiler: gcc-7
       env:

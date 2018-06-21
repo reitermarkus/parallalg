@@ -28,6 +28,10 @@ ifeq ($(OS), Linux)
   CFLAGS += -I$(OCL_HOME)/include -L$(OCL_HOME)/lib
 endif
 
+ifeq ($(shell ccache -V &>/dev/null; echo $$?), 0)
+	CC := ccache $(CC)
+endif
+
 LDFLAGS += $(OPENCL_FLAGS) -fopenmp -lm
 
 all: $(TARGETS)
