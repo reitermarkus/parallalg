@@ -11,17 +11,8 @@ int main(int argc, char** argv) {
   int max_size = 20;
 
   // read problem size
-  int n = 2000;
-  int block_size = 22;
-
-  switch (argc) {
-    case 2:
-      n = atoi(argv[1]);
-      break;
-    case 3:
-      block_size = atoi(argv[2]);
-      break;
-  }
+  int n          = argc >= 2 ? atoi(argv[1]) : 2000;
+  int block_size = argc >= 3 ? atoi(argv[2]) : 22;
 
   int s = n + 1;
   printf("Computing minimum cost for multiplying %d matrices ...\n", n);
