@@ -8,28 +8,17 @@
 #include "open_cl.h"
 #include "utils.h"
 
-void print_array(unsigned long* ary, int len) {
-  printf("[");
-
-  for (size_t i = 0; i < len; i++) {
-    printf("%ld", ary[i]);
-    if (i != len - 1) { printf(", "); }
-  }
-
-  printf("]\n");
-}
-
 int main(int argc, char** argv) {
-  int min_size = 10;
-  int max_size = 20;
+  unsigned long min_size = 10;
+  unsigned long max_size = 20;
 
   // read problem size
-  int n                    = argc >= 2 ? atoi(argv[1]) : 2000;
+  unsigned long n          = argc >= 2 ? atoi(argv[1]) : 2000;
   unsigned long block_size = argc >= 3 ? atoi(argv[2]) : 22;
-  int s = n + 1;
 
   // init
   srand(0);
+  unsigned long s = n + 1;
   unsigned long* l = malloc(sizeof(unsigned long) * s);
   for (size_t i = 0; i < s; i++) {
     l[i] = ((rand() / (float)RAND_MAX) * (max_size - min_size)) + min_size;
@@ -41,7 +30,7 @@ int main(int argc, char** argv) {
   timestamp begin = now();
 
   // initialize solutions for costs of single matrix
-  for (size_t i = 0; i < n; i++) {
+  for (unsigned long i = 0; i < n; i++) {
     minimum_costs[i * n + i] = 0; // there is no multiplication cost for those sub-terms
   }
 
@@ -73,8 +62,8 @@ int main(int argc, char** argv) {
   size_t local_work_size = 256;
   size_t global_work_size = extend_to_multiple(n, local_work_size);
 
-  cl_kernel kernel = clCreateKernel(program, "dynamic_programming", &ret);
-  CLU_ERRCHECK(ret, "Failed to create dynamic_programming kernel from program");
+  cl_kernel kernel = clCreateKernel(program, "iterate_cells", &ret);
+  CLU_ERRCHECK(ret, "Failed to create iterate_cells kernel from program");
 
   cluSetKernelArguments(kernel, 3,
     sizeof(cl_mem), (void*)&l_mem,
