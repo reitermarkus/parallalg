@@ -1,4 +1,3 @@
-
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
@@ -6,7 +5,6 @@
 #include <string.h>
 
 #include "utils.h"
-
 
 int main(int argc, char** argv) {
   int min_size = 10;
