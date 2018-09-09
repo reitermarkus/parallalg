@@ -41,4 +41,4 @@ all: $(TARGETS)
 
 .PHONEY: clean
 clean:
-	$(RM) $(TARGETS) *.o **/*.o
+	$(RM) $(TARGETS) *.o **/*.o $^

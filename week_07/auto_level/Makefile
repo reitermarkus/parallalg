@@ -12,4 +12,4 @@ run: all earth-huge.png
 	@echo "OpenCL:"
 	@./auto_level_ocl earth-huge.png earth-huge.out.png
 
-
+clean: $(wildcard earth-huge.png) $(wildcard earth-huge.out.png)
